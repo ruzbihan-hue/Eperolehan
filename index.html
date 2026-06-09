@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ms" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistem Monitoring Job E-Perolehan</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Segoe UI"', 'Tahoma', 'Geneva', 'Verdana', 'sans-serif'],
+                    },
+                    colors: {
+                        pbi: {
+                            light: '#f3f2f1',
+                            dark: '#111111',
+                            cardLight: '#ffffff',
+                            cardDark: '#252423',
+                            primary: '#118dff',
+                            success: '#12a89d',
+                            warning: '#f2c80f',
+                            danger: '#e044a7',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Recharts -->
+    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.1.9/umd/Recharts.js"></script>
+
+    <style>
+        /* KUNCI BODY SCROLL: Memastikan tab bawah tidak hilang di Google Sites */
+        html, body, #root { 
+            height: 100%; 
+            width: 100%;
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            transition: background-color 0.3s; 
+        }
+        
+        .pbi-shadow { box-shadow: 0 1.2px 3.6px rgba(0,0,0,0.1), 0 6.4px 14.4px rgba(0,0,0,0.13); }
+        
+        /* Custom Scrollbar untuk ruangan dalaman */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c8c6c4; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #605e5c; }
+        ::-webkit-scrollbar-thumb:hover { background: #979593; }
+    </style>
+</head>
+<body class="bg-pbi-light dark:bg-pbi-dark text-gray-900 dark:text-gray-100">
+    <div id="root" class="h-full"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        
+        // Safe destructuring with fallback
+        const Recharts = window.Recharts || {};
+        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } = Recharts;
+
+        // --- ICONS (SVG) ---
+        const IconDashboard = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>;
+        const IconIntake = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" x2="12" y1="18" y2="12"/><line x1="9" x2="15" y1="15" y2="15"/></svg>;
+        const IconOperation = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>;
+        const IconClaim = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h4l2-9 5 18 3-10h6"/></svg>;
+        const IconMoon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>;
+        const IconSun = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>;
+        const IconClose = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
+        const IconMenu = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>;
+
+        // --- MOCK DATA ---
+        const initialJobs = [
+            {
+                id: 'JOB-1001',
+                company: 'Jabatan Kesihatan', vehicle: 'WAA 1234', branch: 'Selangor', dateIntake: '2026-06-01', jobOrderType: 'Job Order', actionType: 'Proceed', quotation: '2500', intakeStatus: 'Proceed',
+                picForeman: 'Ahmad', startOperate: '2026-06-02', finishOperate: '2026-06-04', operationStatus: 'Completed', operationRemark: 'Servis enjin major',
+                invoiceDate: '2026-06-05', invoiceDelivery: 'Online', collectionStatus: 'Payment Received', amountCollection: '2500', claimRemark: 'EFT Cleared'
+            },
+            {
+                id: 'JOB-1002',
+                company: 'Majlis Perbandaran', vehicle: 'BXX 999', branch: 'Kuala Lumpur', dateIntake: '2026-06-08', jobOrderType: 'Verbal', actionType: 'Inspection', quotation: '800', intakeStatus: 'Pending',
+                picForeman: '', startOperate: '', finishOperate: '', operationStatus: '', operationRemark: '',
+                invoiceDate: '', invoiceDelivery: '', collectionStatus: '', amountCollection: '', claimRemark: ''
+            },
+            {
+                id: 'JOB-1003',
+                company: 'Kementerian Dalam Negeri', vehicle: 'JMW 5050', branch: 'Johor', dateIntake: '2026-05-20', jobOrderType: 'Job Order', actionType: 'Proceed', quotation: '5400', intakeStatus: 'Proceed',
+                picForeman: 'Raju', startOperate: '2026-05-21', finishOperate: '2026-05-25', operationStatus: 'Completed', operationRemark: 'Tukar tayar 6 biji',
+                invoiceDate: '2026-05-26', invoiceDelivery: 'Hand', collectionStatus: '', amountCollection: '', claimRemark: '' // Should become Outstanding
+            },
+            {
+                id: 'JOB-1004',
+                company: 'Jabatan Kerja Raya', vehicle: 'PQR 77', branch: 'Penang', dateIntake: '2026-06-05', jobOrderType: 'Job Order', actionType: 'Proceed', quotation: '1200', intakeStatus: 'Proceed',
+                picForeman: 'Ah Chong', startOperate: '2026-06-06', finishOperate: '', operationStatus: 'In Progress', operationRemark: 'Tunggu spare part',
+                invoiceDate: '', invoiceDelivery: '', collectionStatus: '', amountCollection: '', claimRemark: ''
+            }
+        ];
+
+        // --- HELPER FUNCTIONS ---
+        const calculateClaimStatus = (invoiceDate, currentStatus) => {
+            if (currentStatus === 'Payment Received') return 'Payment Received';
+            if (!invoiceDate) return 'Pending Invoice';
+            
+            const invDate = new Date(invoiceDate);
+            const today = new Date(); // Using actual current date (approx June 9 2026 based on context)
+            const diffTime = Math.abs(today - invDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            
+            if (diffDays > 7) return 'Outstanding';
+            return 'Pending Payment';
+        };
+
+        // --- COMPONENTS ---
+
+        // 1. Dashboard Component
+        const Dashboard = ({ jobs }) => {
+            // Process jobs data with dynamic status update for accurate dashboard
+            const processedJobs = jobs.map(job => ({
+                ...job,
+                dynamicCollectionStatus: calculateClaimStatus(job.invoiceDate, job.collectionStatus)
+            }));
+
+            const totalSales = processedJobs.reduce((sum, job) => job.collectionStatus === 'Payment Received' ? sum + Number(job.amountCollection || 0) : sum, 0);
+            const outstandingAmount = processedJobs.reduce((sum, job) => job.dynamicCollectionStatus === 'Outstanding' ? sum + Number(job.quotation || 0) : sum, 0);
+            const activeJobs = processedJobs.filter(j => j.intakeStatus === 'Proceed' && j.operationStatus !== 'Completed').length;
+            const completedJobs = processedJobs.filter(j => j.operationStatus === 'Completed').length;
+
+            // Chart Data
+            const statusData = [
+                { name: 'Pending Intake', value: processedJobs.filter(j => j.intakeStatus === 'Pending').length },
+                { name: 'In Progress', value: activeJobs },
+                { name: 'Completed/Claim', value: completedJobs },
+            ];
+            const COLORS = ['#f2c80f', '#118dff', '#12a89d'];
+
+            const agencyDataMap = {};
+            processedJobs.forEach(job => {
+                if(!agencyDataMap[job.company]) agencyDataMap[job.company] = 0;
+                agencyDataMap[job.company] += Number(job.quotation || 0);
+            });
+            const agencyData = Object.keys(agencyDataMap).map(key => ({ name: key, Quotation: agencyDataMap[key] }));
+
+            return (
+                <div className="space-y-6 animate-fade-in">
+                    <h2 className="text-2xl font-semibold mb-6">Executive Dashboard</h2>
+                    
+                    {/* KPI Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-pbi-cardLight dark:bg-pbi-cardDark p-4 rounded-sm pbi-shadow border-l-4 border-pbi-success">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Total Kutipan Diterima</p>
+                            <h3 className="text-2xl font-bold mt-1">RM {totalSales.toLocaleString()}</h3>
+                        </div>
+                        <div className="bg-pbi-cardLight dark:bg-pbi-cardDark p-4 rounded-sm pbi-shadow border-l-4 border-pbi-danger">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Outstanding (> 7 Hari)</p>
+                            <h3 className="text-2xl font-bold mt-1">RM {outstandingAmount.toLocaleString()}</h3>
+                        </div>
+                        <div className="bg-pbi-cardLight dark:bg-pbi-cardDark p-4 rounded-sm pbi-shadow border-l-4 border-pbi-primary">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Job Dalam Proses (Operation)</p>
+                            <h3 className="text-2xl font-bold mt-1">{activeJobs}</h3>
+                        </div>
+                        <div className="bg-pbi-cardLight dark:bg-pbi-cardDark p-4 rounded-sm pbi-shadow border-l-4 border-pbi-warning">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Job Selesai (Menunggu Bayaran)</p>
+                            <h3 className="text-2xl font-bold mt-1">{completedJobs}</h3>
+                        </div>
+                    </div>
+
+                    {/* Charts */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-pbi-cardLight dark:bg-pbi-cardDark p-4 rounded-sm pbi-shadow h-80 flex flex-col">
+                            <h3 className="text-sm font-semibold mb-4 text-center">Status Job Keseluruhan</h3>
+                            <div className="flex-1 w-full h-full min-h-[200px]">
+                                {ResponsiveContainer ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie data={statusData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" label>
+                                                {statusData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                                            </Pie>
+                                            <Tooltip contentStyle={{ backgroundColor: '#fff', color: '#000' }}/>
+                                            <Legend />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="flex items-center justify-center h-full w-full text-gray-500 text-sm text-center px-4">
+                                        Memuatkan carta... (Sila semak capaian internet / CDN)
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="bg-pbi-cardLight dark:bg-pbi-cardDark p-4 rounded-sm pbi-shadow h-80 flex flex-col">
+                            <h3 className="text-sm font-semibold mb-4 text-center">Nilai Quotation Mengikut Agensi</h3>
+                            <div className="flex-1 w-full h-full min-h-[200px]">
+                                {ResponsiveContainer ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={agencyData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                                            <XAxis dataKey="name" tick={{fontSize: 12}} />
+                                            <YAxis tick={{fontSize: 12}} />
+                                            <Tooltip contentStyle={{ backgroundColor: '#252423', color: '#fff', border:'none' }} itemStyle={{ color: '#118dff' }} />
+                                            <Bar dataKey="Quotation" fill="#118dff" radius={[2, 2, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="flex items-center justify-center h-full w-full text-gray-500 text-sm text-center px-4">
+                                        Memuatkan carta... (Sila semak capaian internet / CDN)
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Modal Wrapper Component
+        const Modal = ({ isOpen, onClose, title, children }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+                    <div className="bg-pbi-cardLight dark:bg-pbi-cardDark w-full max-w-2xl rounded-sm pbi-shadow flex flex-col max-h-[90vh]">
+                        <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 className="text-lg font-semibold">{title}</h3>
+                            <button onClick={onClose} className="text-gray-500 hover:text-red-500"><IconClose /></button>
+                        </div>
+                        <div className="p-4 overflow-y-auto flex-1">
+                            {children}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Shared Input Component
+        const InputGroup = ({ label, type = "text", name, value, onChange, required, options }) => (
+            <div className="mb-4">
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{label} {required && <span className="text-red-500">*</span>}</label>
+                {type === 'select' ? (
+                    <select name={name} value={value || ''} onChange={onChange} required={required}
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-pbi-primary focus:ring-1 focus:ring-pbi-primary">
+                        <option value="">-- Sila Pilih --</option>
+                        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                ) : type === 'textarea' ? (
+                    <textarea name={name} value={value || ''} onChange={onChange} required={required} rows="3"
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-pbi-primary focus:ring-1 focus:ring-pbi-primary"></textarea>
+                ) : (
+                    <input type={type} name={name} value={value || ''} onChange={onChange} required={required}
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-pbi-primary focus:ring-1 focus:ring-pbi-primary" />
+                )}
+            </div>
+        );
+
+        // 2. Job Intake Component
+        const JobIntake = ({ jobs, setJobs }) => {
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [formData, setFormData] = useState({});
+
+            const handleOpenModal = (job = null) => {
+                if (job) {
+                    setFormData(job);
+                } else {
+                    setFormData({
+                        id: `JOB-${Math.floor(1000 + Math.random() * 9000)}`,
+                        company: '', vehicle: '', branch: '', dateIntake: new Date().toISOString().split('T')[0],
+                        jobOrderType: '', actionType: '', quotation: '', intakeStatus: 'Pending',
+                        picForeman: '', startOperate: '', finishOperate: '', operationStatus: 'Pending', operationRemark: '',
+                        invoiceDate: '', invoiceDelivery: '', collectionStatus: 'Pending', amountCollection: '', claimRemark: ''
+                    });
+                }
+                setIsModalOpen(true);
+            };
+
+            const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const exists = jobs.find(j => j.id === formData.id);
+                if (exists) {
+                    setJobs(jobs.map(j => j.id === formData.id ? formData : j));
+                } else {
+                    setJobs([formData, ...jobs]);
+                }
+                setIsModalOpen(false);
+            };
+
+            return (
+                <div className="animate-fade-in">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-semibold">Job Intake</h2>
+                        <button onClick={() => handleOpenModal()} className="bg-pbi-primary hover:bg-blue-600 text-white px-4 py-2 rounded-sm text-sm font-medium transition-colors">
+                            + Tambah Job Baru
+                        </button>
+                    </div>
+
+                    <div className="bg-pbi-cardLight dark:bg-pbi-cardDark rounded-sm pbi-shadow overflow-x-auto">
+                        <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                                <tr>
+                                    <th className="p-3 font-semibold">ID</th>
+                                    <th className="p-3 font-semibold">Syarikat / Agensi</th>
+                                    <th className="p-3 font-semibold">No. Plat</th>
+                                    <th className="p-3 font-semibold">Tarikh Intake</th>
+                                    <th className="p-3 font-semibold">Status Intake</th>
+                                    <th className="p-3 font-semibold">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {jobs.map((job, idx) => (
+                                    <tr key={job.id} className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${idx % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/30'}`}>
+                                        <td className="p-3">{job.id}</td>
+                                        <td className="p-3">{job.company}</td>
+                                        <td className="p-3 font-mono">{job.vehicle}</td>
+                                        <td className="p-3">{job.dateIntake}</td>
+                                        <td className="p-3">
+                                            <span className={`px-2 py-1 text-xs rounded-full ${job.intakeStatus === 'Proceed' ? 'bg-green-100 text-green-800' : job.intakeStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                                                {job.intakeStatus}
+                                            </span>
+                                        </td>
+                                        <td className="p-3">
+                                            <button onClick={() => handleOpenModal(job)} className="text-pbi-primary hover:underline text-sm font-medium">Kemaskini</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Borang Job Intake">
+                        <form onSubmit={handleSubmit}>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <InputGroup label="Company / Agency" name="company" value={formData.company} onChange={handleChange} required />
+                                <InputGroup label="Vehicle (No Plat)" name="vehicle" value={formData.vehicle} onChange={handleChange} required />
+                                <InputGroup label="Branch" name="branch" value={formData.branch} onChange={handleChange} required />
+                                <InputGroup label="Tarikh Intake" type="date" name="dateIntake" value={formData.dateIntake} onChange={handleChange} required />
+                                <InputGroup label="Job Order / Verbal" type="select" name="jobOrderType" value={formData.jobOrderType} onChange={handleChange} options={['Job Order', 'Verbal']} required />
+                                <InputGroup label="Proceed atau Inspection" type="select" name="actionType" value={formData.actionType} onChange={handleChange} options={['Proceed', 'Inspection']} required />
+                                <InputGroup label="Quotation Amount (RM)" type="number" name="quotation" value={formData.quotation} onChange={handleChange} required />
+                                <InputGroup label="Status Intake" type="select" name="intakeStatus" value={formData.intakeStatus} onChange={handleChange} options={['Pending', 'Proceed', 'Not Proceed']} required />
+                            </div>
+                            <div className="mt-6 flex justify-end">
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="mr-3 px-4 py-2 border border-gray-300 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800">Batal</button>
+                                <button type="submit" className="px-4 py-2 bg-pbi-primary text-white rounded-sm hover:bg-blue-600">Simpan Intake</button>
+                            </div>
+                        </form>
+                    </Modal>
+                </div>
+            );
+        };
+
+        // 3. Operation Component
+        const Operation = ({ jobs, setJobs }) => {
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [formData, setFormData] = useState({});
+
+            // OPERATION RULE: Only show jobs where Intake Status is 'Proceed'
+            const operationJobs = jobs.filter(j => j.intakeStatus === 'Proceed');
+
+            const handleOpenModal = (job) => {
+                setFormData(job);
+                setIsModalOpen(true);
+            };
+
+            const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setJobs(jobs.map(j => j.id === formData.id ? formData : j));
+                setIsModalOpen(false);
+            };
+
+            return (
+                <div className="animate-fade-in">
+                    <h2 className="text-2xl font-semibold mb-6">Operation Department</h2>
+                    <div className="bg-pbi-cardLight dark:bg-pbi-cardDark rounded-sm pbi-shadow overflow-x-auto">
+                        <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                                <tr>
+                                    <th className="p-3 font-semibold">ID</th>
+                                    <th className="p-3 font-semibold">No. Plat</th>
+                                    <th className="p-3 font-semibold">PIC Foreman</th>
+                                    <th className="p-3 font-semibold">Mula</th>
+                                    <th className="p-3 font-semibold">Tamat</th>
+                                    <th className="p-3 font-semibold">Status Operasi</th>
+                                    <th className="p-3 font-semibold">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {operationJobs.map((job, idx) => (
+                                    <tr key={job.id} className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${idx % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/30'}`}>
+                                        <td className="p-3">{job.id}</td>
+                                        <td className="p-3 font-mono font-bold">{job.vehicle}</td>
+                                        <td className="p-3">{job.picForeman || '-'}</td>
+                                        <td className="p-3">{job.startOperate || '-'}</td>
+                                        <td className="p-3">{job.finishOperate || '-'}</td>
+                                        <td className="p-3">
+                                             <span className={`px-2 py-1 text-xs rounded-full ${job.operationStatus === 'Completed' ? 'bg-green-100 text-green-800' : job.operationStatus === 'In Progress' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                {job.operationStatus || 'Pending'}
+                                            </span>
+                                        </td>
+                                        <td className="p-3">
+                                            <button onClick={() => handleOpenModal(job)} className="text-pbi-primary hover:underline text-sm font-medium">Update Kerja</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {operationJobs.length === 0 && (
+                                    <tr><td colSpan="7" className="p-4 text-center text-gray-500">Tiada job yang dibenarkan proceed buat masa ini.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Update Operasi: ${formData.id}`}>
+                        <form onSubmit={handleSubmit}>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <InputGroup label="PIC Foreman" name="picForeman" value={formData.picForeman} onChange={handleChange} required />
+                                <InputGroup label="Status Operation Job" type="select" name="operationStatus" value={formData.operationStatus} onChange={handleChange} options={['Pending', 'In Progress', 'Completed']} required />
+                                <InputGroup label="Start Operate" type="date" name="startOperate" value={formData.startOperate} onChange={handleChange} />
+                                <InputGroup label="Finish Operate" type="date" name="finishOperate" value={formData.finishOperate} onChange={handleChange} />
+                                <div className="md:col-span-2">
+                                    <InputGroup label="Remark (Jika perlu)" type="textarea" name="operationRemark" value={formData.operationRemark} onChange={handleChange} />
+                                </div>
+                            </div>
+                            <div className="mt-6 flex justify-end">
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="mr-3 px-4 py-2 border border-gray-300 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800">Batal</button>
+                                <button type="submit" className="px-4 py-2 bg-pbi-primary text-white rounded-sm hover:bg-blue-600">Simpan Operasi</button>
+                            </div>
+                        </form>
+                    </Modal>
+                </div>
+            );
+        };
+
+        // 4. Report & Claim Component
+        const ReportClaim = ({ jobs, setJobs }) => {
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [formData, setFormData] = useState({});
+
+            // CLAIM RULE: Only show jobs where Operation is 'Completed'
+            const claimJobs = jobs.filter(j => j.operationStatus === 'Completed').map(job => ({
+                ...job,
+                dynamicClaimStatus: calculateClaimStatus(job.invoiceDate, job.collectionStatus)
+            }));
+
+            const handleOpenModal = (job) => {
+                setFormData(job);
+                setIsModalOpen(true);
+            };
+
+            const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+            const handleUploadInvoice = () => {
+                const today = new Date().toISOString().split('T')[0];
+                setFormData({ ...formData, invoiceDate: today });
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setJobs(jobs.map(j => j.id === formData.id ? formData : j));
+                setIsModalOpen(false);
+            };
+
+            return (
+                <div className="animate-fade-in">
+                    <h2 className="text-2xl font-semibold mb-6">Report & Claim</h2>
+                    <div className="bg-pbi-cardLight dark:bg-pbi-cardDark rounded-sm pbi-shadow overflow-x-auto">
+                        <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                                <tr>
+                                    <th className="p-3 font-semibold">ID</th>
+                                    <th className="p-3 font-semibold">Agensi</th>
+                                    <th className="p-3 font-semibold">Tarikh Invois</th>
+                                    <th className="p-3 font-semibold">Status Kutipan</th>
+                                    <th className="p-3 font-semibold">Jumlah (RM)</th>
+                                    <th className="p-3 font-semibold">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {claimJobs.map((job, idx) => {
+                                    const isOutstanding = job.dynamicClaimStatus === 'Outstanding';
+                                    const isPaid = job.dynamicClaimStatus === 'Payment Received';
+                                    
+                                    return (
+                                    <tr key={job.id} className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${idx % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/30'}`}>
+                                        <td className="p-3">{job.id}</td>
+                                        <td className="p-3">{job.company}</td>
+                                        <td className="p-3">{job.invoiceDate ? <span className="text-green-600 dark:text-green-400 font-medium">{job.invoiceDate} (Telah Upload)</span> : <span className="text-gray-400">Pending Upload</span>}</td>
+                                        <td className="p-3">
+                                            <span className={`px-2 py-1 text-xs rounded-full font-bold
+                                                ${isPaid ? 'bg-green-100 text-green-800' : 
+                                                  isOutstanding ? 'bg-red-100 text-red-800 animate-pulse' : 
+                                                  'bg-yellow-100 text-yellow-800'}`}>
+                                                {job.dynamicClaimStatus}
+                                            </span>
+                                        </td>
+                                        <td className="p-3">{job.amountCollection ? `RM ${job.amountCollection}` : '-'}</td>
+                                        <td className="p-3">
+                                            <button onClick={() => handleOpenModal(job)} className="text-pbi-primary hover:underline text-sm font-medium">Urus Claim</button>
+                                        </td>
+                                    </tr>
+                                    )
+                                })}
+                                {claimJobs.length === 0 && (
+                                    <tr><td colSpan="6" className="p-4 text-center text-gray-500">Tiada job yang telah selesai untuk di-claim.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Urus Claim & Invois: ${formData.id}`}>
+                        <form onSubmit={handleSubmit}>
+                            <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-sm mb-4 border border-blue-100 dark:border-blue-800">
+                                <h4 className="font-semibold mb-2">Status Invois</h4>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm">
+                                        Tarikh Upload: {formData.invoiceDate ? <strong className="text-green-600 dark:text-green-400">{formData.invoiceDate} (Completed)</strong> : <strong className="text-red-500">Pending</strong>}
+                                    </p>
+                                    {!formData.invoiceDate && (
+                                        <button type="button" onClick={handleUploadInvoice} className="bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 px-3 py-1 text-sm rounded-sm hover:bg-gray-700 transition">
+                                            Simulasi Upload Invois (Set Tarikh Hari Ini)
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <InputGroup label="Cara Penghantaran Invois" type="select" name="invoiceDelivery" value={formData.invoiceDelivery} onChange={handleChange} options={['Online (Portal E-Perolehan)', 'Hand Delivery', 'Pos/Kurier']} />
+                                <InputGroup label="Status Kutipan Koleksi" type="select" name="collectionStatus" value={formData.collectionStatus} onChange={handleChange} options={['Pending', 'Payment Received']} />
+                                <InputGroup label="Amount Collection Diterima (RM)" type="number" name="amountCollection" value={formData.amountCollection} onChange={handleChange} />
+                                <div className="md:col-span-2">
+                                    <InputGroup label="Remark Claim" type="textarea" name="claimRemark" value={formData.claimRemark} onChange={handleChange} />
+                                </div>
+                            </div>
+                            
+                            <div className="mt-6 flex justify-end">
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="mr-3 px-4 py-2 border border-gray-300 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800">Batal</button>
+                                <button type="submit" className="px-4 py-2 bg-pbi-primary text-white rounded-sm hover:bg-blue-600">Simpan Maklumat Claim</button>
+                            </div>
+                        </form>
+                    </Modal>
+                </div>
+            );
+        };
+
+        // --- MAIN APP COMPONENT ---
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [isDarkMode, setIsDarkMode] = useState(false);
+            const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+            const [jobs, setJobs] = useState(initialJobs);
+
+            // Apply Dark Mode Class to HTML tag
+            useEffect(() => {
+                if (isDarkMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }, [isDarkMode]);
+
+            const tabs = [
+                { id: 'dashboard', label: 'Dashboard', icon: IconDashboard },
+                { id: 'intake', label: 'Job Intake', icon: IconIntake },
+                { id: 'operation', label: 'Operation', icon: IconOperation },
+                { id: 'claim', label: 'Report & Claim', icon: IconClaim },
+            ];
+
+            return (
+                <div className="h-full w-full flex flex-col md:flex-row bg-pbi-light dark:bg-pbi-dark relative overflow-hidden">
+                    {/* Mobile Header (Top) */}
+                    <div className="md:hidden flex items-center justify-between p-4 bg-pbi-cardLight dark:bg-pbi-cardDark border-b border-gray-200 dark:border-gray-800 z-40 flex-shrink-0 pbi-shadow">
+                        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pbi-primary to-blue-400">
+                            E-Perolehan
+                        </h1>
+                        <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-500">
+                            {isDarkMode ? <IconSun /> : <IconMoon />}
+                        </button>
+                    </div>
+
+                    {/* Desktop Sidebar */}
+                    <aside className={`hidden md:flex flex-col bg-pbi-cardLight dark:bg-pbi-cardDark border-r border-gray-200 dark:border-gray-800 flex-shrink-0 z-10 pbi-shadow transition-all duration-300 ease-in-out h-full ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
+                        <div className={`p-4 border-b border-gray-200 dark:border-gray-800 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+                            {!isSidebarCollapsed && (
+                                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pbi-primary to-blue-400 truncate">
+                                    E-Perolehan
+                                </h1>
+                            )}
+                            <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-500" title={isSidebarCollapsed ? "Maximize Sidebar" : "Minimize Sidebar"}>
+                                <IconMenu />
+                            </button>
+                        </div>
+                        <nav className="p-4 space-y-2 flex-1">
+                            {tabs.map(tab => {
+                                const Icon = tab.icon;
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button 
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        title={isSidebarCollapsed ? tab.label : ''}
+                                        className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-2.5 rounded-sm transition-colors text-sm font-medium ${
+                                            isActive 
+                                            ? 'bg-pbi-primary/10 text-pbi-primary border-l-4 border-pbi-primary' 
+                                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent'
+                                        }`}
+                                    >
+                                        <Icon />
+                                        {!isSidebarCollapsed && <span>{tab.label}</span>}
+                                    </button>
+                                );
+                            })}
+                        </nav>
+                        {/* Theme Toggle di bahagian bawah sidebar (Desktop) */}
+                        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+                             <button onClick={() => setIsDarkMode(!isDarkMode)} className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-3'} p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-500`} title="Tukar Tema">
+                                {isDarkMode ? <IconSun /> : <IconMoon />}
+                                {!isSidebarCollapsed && <span className="text-sm font-medium">{isDarkMode ? 'Mod Terang' : 'Mod Gelap'}</span>}
+                            </button>
+                        </div>
+                    </aside>
+
+                    {/* Kawasan Scroll Internal (Main Content) */}
+                    <main className="flex-1 flex flex-col overflow-y-auto relative z-0 pb-16 md:pb-0">
+                        <div className="flex-1 p-4 md:p-8 flex flex-col">
+                            <header className="mb-8 flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">Workspace</h2>
+                                    <h1 className="text-2xl md:text-3xl font-bold">{tabs.find(t => t.id === activeTab)?.label}</h1>
+                                </div>
+                                <div className="flex items-center space-x-3">
+                                    <div className="text-right hidden sm:block">
+                                        <p className="text-sm font-bold">Admin Portal</p>
+                                        <p className="text-xs text-gray-500">15yr Dev Mode</p>
+                                    </div>
+                                    <div className="h-10 w-10 rounded-full bg-pbi-primary flex items-center justify-center text-white font-bold">AD</div>
+                                </div>
+                            </header>
+
+                            <div className="max-w-7xl mx-auto w-full flex-1">
+                                {activeTab === 'dashboard' && <Dashboard jobs={jobs} />}
+                                {activeTab === 'intake' && <JobIntake jobs={jobs} setJobs={setJobs} />}
+                                {activeTab === 'operation' && <Operation jobs={jobs} setJobs={setJobs} />}
+                                {activeTab === 'claim' && <ReportClaim jobs={jobs} setJobs={setJobs} />}
+                            </div>
+                        </div>
+                        
+                        {/* Footer Content */}
+                        <footer className="py-6 text-center text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800 bg-pbi-cardLight dark:bg-pbi-cardDark mt-auto shrink-0">
+                            Copyright &copy; {new Date().getFullYear()} E Perolehan Prima First Auto Sdn Bhd.
+                        </footer>
+                    </main>
+
+                    {/* Mobile Bottom Navigation Bar (Absolute) */}
+                    <nav className="md:hidden absolute bottom-0 left-0 right-0 w-full bg-pbi-cardLight dark:bg-pbi-cardDark border-t border-gray-200 dark:border-gray-800 z-50 flex justify-around items-center pbi-shadow pb-2 pt-2">
+                        {tabs.map(tab => {
+                            const Icon = tab.icon;
+                            const isActive = activeTab === tab.id;
+                            return (
+                                 <button 
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)} 
+                                    className={`flex flex-col items-center justify-center w-full transition-colors ${isActive ? 'text-pbi-primary' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
+                                >
+                                     <div className={`p-1.5 rounded-full ${isActive ? 'bg-pbi-primary/10' : ''}`}>
+                                        <Icon />
+                                     </div>
+                                     <span className={`text-[10px] mt-0.5 font-medium ${isActive ? 'font-bold' : ''}`}>{tab.label}</span>
+                                 </button>
+                            )
+                        })}
+                    </nav>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
