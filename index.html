@@ -87,26 +87,26 @@
         // --- MOCK DATA ---
         const initialJobs = [
             {
-                id: 'JOB-1001',
-                company: 'Jabatan Kesihatan', vehicle: 'WAA 1234', branch: 'Selangor', dateIntake: '2026-06-01', jobOrderType: 'Job Order', actionType: 'Proceed', quotation: '2500', intakeStatus: 'Proceed',
+                quotationNumber: 'QTN-1001',
+                company: 'Jabatan Kesihatan', vehicle: 'WAA 1234', branch: 'Selangor', dateIntake: '2026-06-01', jobOrderType: 'Job Order', actionType: 'Proceed', quotationAmount: '2500', intakeStatus: 'Proceed',
                 picForeman: 'Ahmad', startOperate: '2026-06-02', finishOperate: '2026-06-04', operationStatus: 'Completed', operationRemark: 'Servis enjin major',
                 invoiceDate: '2026-06-05', invoiceDelivery: 'Online', collectionStatus: 'Payment Received', amountCollection: '2500', claimRemark: 'EFT Cleared'
             },
             {
-                id: 'JOB-1002',
-                company: 'Majlis Perbandaran', vehicle: 'BXX 999', branch: 'Kuala Lumpur', dateIntake: '2026-06-08', jobOrderType: 'Verbal', actionType: 'Inspection', quotation: '800', intakeStatus: 'Pending',
+                quotationNumber: 'QTN-1002',
+                company: 'Majlis Perbandaran', vehicle: 'BXX 999', branch: 'Kuala Lumpur', dateIntake: '2026-06-08', jobOrderType: 'Verbal', actionType: 'Inspection', quotationAmount: '800', intakeStatus: 'Pending',
                 picForeman: '', startOperate: '', finishOperate: '', operationStatus: '', operationRemark: '',
                 invoiceDate: '', invoiceDelivery: '', collectionStatus: '', amountCollection: '', claimRemark: ''
             },
             {
-                id: 'JOB-1003',
-                company: 'Kementerian Dalam Negeri', vehicle: 'JMW 5050', branch: 'Johor', dateIntake: '2026-05-20', jobOrderType: 'Job Order', actionType: 'Proceed', quotation: '5400', intakeStatus: 'Proceed',
+                quotationNumber: 'QTN-1003',
+                company: 'Kementerian Dalam Negeri', vehicle: 'JMW 5050', branch: 'Johor', dateIntake: '2026-05-20', jobOrderType: 'Job Order', actionType: 'Proceed', quotationAmount: '5400', intakeStatus: 'Proceed',
                 picForeman: 'Raju', startOperate: '2026-05-21', finishOperate: '2026-05-25', operationStatus: 'Completed', operationRemark: 'Tukar tayar 6 biji',
                 invoiceDate: '2026-05-26', invoiceDelivery: 'Hand', collectionStatus: '', amountCollection: '', claimRemark: '' // Should become Outstanding
             },
             {
-                id: 'JOB-1004',
-                company: 'Jabatan Kerja Raya', vehicle: 'PQR 77', branch: 'Penang', dateIntake: '2026-06-05', jobOrderType: 'Job Order', actionType: 'Proceed', quotation: '1200', intakeStatus: 'Proceed',
+                quotationNumber: 'QTN-1004',
+                company: 'Jabatan Kerja Raya', vehicle: 'PQR 77', branch: 'Penang', dateIntake: '2026-06-05', jobOrderType: 'Job Order', actionType: 'Proceed', quotationAmount: '1200', intakeStatus: 'Proceed',
                 picForeman: 'Ah Chong', startOperate: '2026-06-06', finishOperate: '', operationStatus: 'In Progress', operationRemark: 'Tunggu spare part',
                 invoiceDate: '', invoiceDelivery: '', collectionStatus: '', amountCollection: '', claimRemark: ''
             }
@@ -137,7 +137,7 @@
             }));
 
             const totalSales = processedJobs.reduce((sum, job) => job.collectionStatus === 'Payment Received' ? sum + Number(job.amountCollection || 0) : sum, 0);
-            const outstandingAmount = processedJobs.reduce((sum, job) => job.dynamicCollectionStatus === 'Outstanding' ? sum + Number(job.quotation || 0) : sum, 0);
+            const outstandingAmount = processedJobs.reduce((sum, job) => job.dynamicCollectionStatus === 'Outstanding' ? sum + Number(job.quotationAmount || 0) : sum, 0);
             const activeJobs = processedJobs.filter(j => j.intakeStatus === 'Proceed' && j.operationStatus !== 'Completed').length;
             const completedJobs = processedJobs.filter(j => j.operationStatus === 'Completed').length;
 
@@ -152,7 +152,7 @@
             const agencyDataMap = {};
             processedJobs.forEach(job => {
                 if(!agencyDataMap[job.company]) agencyDataMap[job.company] = 0;
-                agencyDataMap[job.company] += Number(job.quotation || 0);
+                agencyDataMap[job.company] += Number(job.quotationAmount || 0);
             });
             const agencyData = Object.keys(agencyDataMap).map(key => ({ name: key, Quotation: agencyDataMap[key] }));
 
@@ -265,19 +265,57 @@
             </div>
         );
 
+        // Shared Filter Component
+        const FilterBar = ({ companies, statuses, filterCompany, setFilterCompany, filterStatus, setFilterStatus }) => (
+            <div className="flex flex-col md:flex-row gap-4 mb-4 bg-white dark:bg-gray-800 p-4 rounded-sm pbi-shadow border border-gray-200 dark:border-gray-700">
+                <div className="flex-1">
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Tapis Syarikat / Agensi</label>
+                    <select value={filterCompany} onChange={(e) => setFilterCompany(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-pbi-primary focus:ring-1 focus:ring-pbi-primary text-sm">
+                        <option value="">Semua Syarikat</option>
+                        {companies.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                </div>
+                <div className="flex-1">
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Tapis Status</label>
+                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-pbi-primary focus:ring-1 focus:ring-pbi-primary text-sm">
+                        <option value="">Semua Status</option>
+                        {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                </div>
+            </div>
+        );
+
         // 2. Job Intake Component
         const JobIntake = ({ jobs, setJobs }) => {
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [formData, setFormData] = useState({});
+            const [filterCompany, setFilterCompany] = useState('');
+            const [filterStatus, setFilterStatus] = useState('');
+
+            // Extract unique values for filters
+            const uniqueCompanies = [...new Set(jobs.map(j => j.company))].filter(Boolean);
+            const uniqueStatuses = ['Pending', 'Proceed', 'Not Proceed'];
+
+            // Filter & Sort Logic
+            const displayJobs = useMemo(() => {
+                let filtered = jobs.filter(j => {
+                    return (filterCompany ? j.company === filterCompany : true) &&
+                           (filterStatus ? j.intakeStatus === filterStatus : true);
+                });
+
+                // Sort: Pending (1) -> Proceed (2) -> Not Proceed (3)
+                const order = { 'Pending': 1, 'Proceed': 2, 'Not Proceed': 3 };
+                return filtered.sort((a, b) => (order[a.intakeStatus] || 99) - (order[b.intakeStatus] || 99));
+            }, [jobs, filterCompany, filterStatus]);
 
             const handleOpenModal = (job = null) => {
                 if (job) {
                     setFormData(job);
                 } else {
                     setFormData({
-                        id: `JOB-${Math.floor(1000 + Math.random() * 9000)}`,
+                        quotationNumber: `QTN-${Math.floor(1000 + Math.random() * 9000)}`,
                         company: '', vehicle: '', branch: '', dateIntake: new Date().toISOString().split('T')[0],
-                        jobOrderType: '', actionType: '', quotation: '', intakeStatus: 'Pending',
+                        jobOrderType: '', actionType: '', quotationAmount: '', intakeStatus: 'Pending',
                         picForeman: '', startOperate: '', finishOperate: '', operationStatus: 'Pending', operationRemark: '',
                         invoiceDate: '', invoiceDelivery: '', collectionStatus: 'Pending', amountCollection: '', claimRemark: ''
                     });
@@ -289,9 +327,9 @@
 
             const handleSubmit = (e) => {
                 e.preventDefault();
-                const exists = jobs.find(j => j.id === formData.id);
+                const exists = jobs.find(j => j.quotationNumber === formData.quotationNumber);
                 if (exists) {
-                    setJobs(jobs.map(j => j.id === formData.id ? formData : j));
+                    setJobs(jobs.map(j => j.quotationNumber === formData.quotationNumber ? formData : j));
                 } else {
                     setJobs([formData, ...jobs]);
                 }
@@ -307,11 +345,13 @@
                         </button>
                     </div>
 
+                    <FilterBar companies={uniqueCompanies} statuses={uniqueStatuses} filterCompany={filterCompany} setFilterCompany={setFilterCompany} filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
+
                     <div className="bg-pbi-cardLight dark:bg-pbi-cardDark rounded-sm pbi-shadow overflow-x-auto">
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th className="p-3 font-semibold">ID</th>
+                                    <th className="p-3 font-semibold">No. Sebutharga</th>
                                     <th className="p-3 font-semibold">Syarikat / Agensi</th>
                                     <th className="p-3 font-semibold">No. Plat</th>
                                     <th className="p-3 font-semibold">Tarikh Intake</th>
@@ -320,9 +360,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {jobs.map((job, idx) => (
-                                    <tr key={job.id} className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${idx % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/30'}`}>
-                                        <td className="p-3">{job.id}</td>
+                                {displayJobs.map((job, idx) => (
+                                    <tr key={job.quotationNumber} className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${idx % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/30'}`}>
+                                        <td className="p-3 font-medium text-pbi-primary">{job.quotationNumber}</td>
                                         <td className="p-3">{job.company}</td>
                                         <td className="p-3 font-mono">{job.vehicle}</td>
                                         <td className="p-3">{job.dateIntake}</td>
@@ -336,6 +376,9 @@
                                         </td>
                                     </tr>
                                 ))}
+                                {displayJobs.length === 0 && (
+                                    <tr><td colSpan="6" className="p-4 text-center text-gray-500">Tiada rekod dijumpai.</td></tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -343,13 +386,14 @@
                     <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Borang Job Intake">
                         <form onSubmit={handleSubmit}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <InputGroup label="No. Sebutharga" name="quotationNumber" value={formData.quotationNumber} onChange={handleChange} required />
                                 <InputGroup label="Company / Agency" name="company" value={formData.company} onChange={handleChange} required />
                                 <InputGroup label="Vehicle (No Plat)" name="vehicle" value={formData.vehicle} onChange={handleChange} required />
                                 <InputGroup label="Branch" name="branch" value={formData.branch} onChange={handleChange} required />
                                 <InputGroup label="Tarikh Intake" type="date" name="dateIntake" value={formData.dateIntake} onChange={handleChange} required />
                                 <InputGroup label="Job Order / Verbal" type="select" name="jobOrderType" value={formData.jobOrderType} onChange={handleChange} options={['Job Order', 'Verbal']} required />
                                 <InputGroup label="Proceed atau Inspection" type="select" name="actionType" value={formData.actionType} onChange={handleChange} options={['Proceed', 'Inspection']} required />
-                                <InputGroup label="Quotation Amount (RM)" type="number" name="quotation" value={formData.quotation} onChange={handleChange} required />
+                                <InputGroup label="Quotation Amount (RM)" type="number" name="quotationAmount" value={formData.quotationAmount} onChange={handleChange} required />
                                 <InputGroup label="Status Intake" type="select" name="intakeStatus" value={formData.intakeStatus} onChange={handleChange} options={['Pending', 'Proceed', 'Not Proceed']} required />
                             </div>
                             <div className="mt-6 flex justify-end">
@@ -366,9 +410,28 @@
         const Operation = ({ jobs, setJobs }) => {
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [formData, setFormData] = useState({});
+            const [filterCompany, setFilterCompany] = useState('');
+            const [filterStatus, setFilterStatus] = useState('');
 
             // OPERATION RULE: Only show jobs where Intake Status is 'Proceed'
-            const operationJobs = jobs.filter(j => j.intakeStatus === 'Proceed');
+            const baseOperationJobs = jobs.filter(j => j.intakeStatus === 'Proceed');
+            
+            const uniqueCompanies = [...new Set(baseOperationJobs.map(j => j.company))].filter(Boolean);
+            const uniqueStatuses = ['Pending', 'In Progress', 'Completed'];
+
+            // Filter & Sort Logic
+            const displayJobs = useMemo(() => {
+                let filtered = baseOperationJobs.filter(j => {
+                    const currentStatus = j.operationStatus || 'Pending';
+                    return (filterCompany ? j.company === filterCompany : true) &&
+                           (filterStatus ? currentStatus === filterStatus : true);
+                });
+
+                // Sort: Pending (1) -> In Progress (2) -> Completed (3)
+                const order = { 'Pending': 1, 'In Progress': 2, 'Completed': 3 };
+                return filtered.sort((a, b) => (order[a.operationStatus || 'Pending'] || 99) - (order[b.operationStatus || 'Pending'] || 99));
+            }, [baseOperationJobs, filterCompany, filterStatus]);
+
 
             const handleOpenModal = (job) => {
                 setFormData(job);
@@ -379,18 +442,21 @@
 
             const handleSubmit = (e) => {
                 e.preventDefault();
-                setJobs(jobs.map(j => j.id === formData.id ? formData : j));
+                setJobs(jobs.map(j => j.quotationNumber === formData.quotationNumber ? formData : j));
                 setIsModalOpen(false);
             };
 
             return (
                 <div className="animate-fade-in">
                     <h2 className="text-2xl font-semibold mb-6">Operation Department</h2>
+                    
+                    <FilterBar companies={uniqueCompanies} statuses={uniqueStatuses} filterCompany={filterCompany} setFilterCompany={setFilterCompany} filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
+
                     <div className="bg-pbi-cardLight dark:bg-pbi-cardDark rounded-sm pbi-shadow overflow-x-auto">
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th className="p-3 font-semibold">ID</th>
+                                    <th className="p-3 font-semibold">No. Sebutharga</th>
                                     <th className="p-3 font-semibold">No. Plat</th>
                                     <th className="p-3 font-semibold">PIC Foreman</th>
                                     <th className="p-3 font-semibold">Mula</th>
@@ -400,9 +466,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {operationJobs.map((job, idx) => (
-                                    <tr key={job.id} className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${idx % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/30'}`}>
-                                        <td className="p-3">{job.id}</td>
+                                {displayJobs.map((job, idx) => (
+                                    <tr key={job.quotationNumber} className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${idx % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/30'}`}>
+                                        <td className="p-3 font-medium text-pbi-primary">{job.quotationNumber}</td>
                                         <td className="p-3 font-mono font-bold">{job.vehicle}</td>
                                         <td className="p-3">{job.picForeman || '-'}</td>
                                         <td className="p-3">{job.startOperate || '-'}</td>
@@ -417,14 +483,14 @@
                                         </td>
                                     </tr>
                                 ))}
-                                {operationJobs.length === 0 && (
-                                    <tr><td colSpan="7" className="p-4 text-center text-gray-500">Tiada job yang dibenarkan proceed buat masa ini.</td></tr>
+                                {displayJobs.length === 0 && (
+                                    <tr><td colSpan="7" className="p-4 text-center text-gray-500">Tiada job ditemui.</td></tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
 
-                    <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Update Operasi: ${formData.id}`}>
+                    <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Update Operasi: ${formData.quotationNumber}`}>
                         <form onSubmit={handleSubmit}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <InputGroup label="PIC Foreman" name="picForeman" value={formData.picForeman} onChange={handleChange} required />
@@ -449,12 +515,29 @@
         const ReportClaim = ({ jobs, setJobs }) => {
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [formData, setFormData] = useState({});
+            const [filterCompany, setFilterCompany] = useState('');
+            const [filterStatus, setFilterStatus] = useState('');
 
             // CLAIM RULE: Only show jobs where Operation is 'Completed'
-            const claimJobs = jobs.filter(j => j.operationStatus === 'Completed').map(job => ({
+            const baseClaimJobs = jobs.filter(j => j.operationStatus === 'Completed').map(job => ({
                 ...job,
                 dynamicClaimStatus: calculateClaimStatus(job.invoiceDate, job.collectionStatus)
             }));
+
+            const uniqueCompanies = [...new Set(baseClaimJobs.map(j => j.company))].filter(Boolean);
+            const uniqueStatuses = ['Outstanding', 'Pending Invoice', 'Pending Payment', 'Payment Received'];
+
+            // Filter & Sort Logic
+            const displayJobs = useMemo(() => {
+                let filtered = baseClaimJobs.filter(j => {
+                    return (filterCompany ? j.company === filterCompany : true) &&
+                           (filterStatus ? j.dynamicClaimStatus === filterStatus : true);
+                });
+
+                // Sort: Outstanding (1) -> Pending Invoice/Payment (2) -> Payment Received (3)
+                const order = { 'Outstanding': 1, 'Pending Invoice': 2, 'Pending Payment': 2, 'Payment Received': 3 };
+                return filtered.sort((a, b) => (order[a.dynamicClaimStatus] || 99) - (order[b.dynamicClaimStatus] || 99));
+            }, [baseClaimJobs, filterCompany, filterStatus]);
 
             const handleOpenModal = (job) => {
                 setFormData(job);
@@ -470,18 +553,21 @@
 
             const handleSubmit = (e) => {
                 e.preventDefault();
-                setJobs(jobs.map(j => j.id === formData.id ? formData : j));
+                setJobs(jobs.map(j => j.quotationNumber === formData.quotationNumber ? formData : j));
                 setIsModalOpen(false);
             };
 
             return (
                 <div className="animate-fade-in">
                     <h2 className="text-2xl font-semibold mb-6">Report & Claim</h2>
+                    
+                    <FilterBar companies={uniqueCompanies} statuses={uniqueStatuses} filterCompany={filterCompany} setFilterCompany={setFilterCompany} filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
+
                     <div className="bg-pbi-cardLight dark:bg-pbi-cardDark rounded-sm pbi-shadow overflow-x-auto">
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th className="p-3 font-semibold">ID</th>
+                                    <th className="p-3 font-semibold">No. Sebutharga</th>
                                     <th className="p-3 font-semibold">Agensi</th>
                                     <th className="p-3 font-semibold">Tarikh Invois</th>
                                     <th className="p-3 font-semibold">Status Kutipan</th>
@@ -490,13 +576,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {claimJobs.map((job, idx) => {
+                                {displayJobs.map((job, idx) => {
                                     const isOutstanding = job.dynamicClaimStatus === 'Outstanding';
                                     const isPaid = job.dynamicClaimStatus === 'Payment Received';
                                     
                                     return (
-                                    <tr key={job.id} className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${idx % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/30'}`}>
-                                        <td className="p-3">{job.id}</td>
+                                    <tr key={job.quotationNumber} className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${idx % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/30'}`}>
+                                        <td className="p-3 font-medium text-pbi-primary">{job.quotationNumber}</td>
                                         <td className="p-3">{job.company}</td>
                                         <td className="p-3">{job.invoiceDate ? <span className="text-green-600 dark:text-green-400 font-medium">{job.invoiceDate} (Telah Upload)</span> : <span className="text-gray-400">Pending Upload</span>}</td>
                                         <td className="p-3">
@@ -514,14 +600,14 @@
                                     </tr>
                                     )
                                 })}
-                                {claimJobs.length === 0 && (
-                                    <tr><td colSpan="6" className="p-4 text-center text-gray-500">Tiada job yang telah selesai untuk di-claim.</td></tr>
+                                {displayJobs.length === 0 && (
+                                    <tr><td colSpan="6" className="p-4 text-center text-gray-500">Tiada job ditemui.</td></tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
 
-                    <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Urus Claim & Invois: ${formData.id}`}>
+                    <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Urus Claim & Invois: ${formData.quotationNumber}`}>
                         <form onSubmit={handleSubmit}>
                             <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-sm mb-4 border border-blue-100 dark:border-blue-800">
                                 <h4 className="font-semibold mb-2">Status Invois</h4>
