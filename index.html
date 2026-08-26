@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistem Monitoring Job E-Perolehan</title>
 
+    <!-- Favicon & PWA Icons -->
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/Jzd5bvTC/image.png">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/Jzd5bvTC/image.png">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -544,17 +548,19 @@
                                 
                                 {/* Custom Select Input for Company with Add Button */}
                                 <div className="mb-4">
-                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Company / Agency <span className="text-red-500">*</span></label>
-                                    <div className="flex gap-2">
-                                        <select name="company" value={formData.company || ''} onChange={handleChange} required
-                                            className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 focus:outline-none focus:border-pbi-primary focus:ring-1 focus:ring-pbi-primary">
-                                            <option value="">-- Sila Pilih --</option>
-                                            {clients.map((c, idx) => <option key={idx} value={cleanArrayString(c.company)}>{cleanArrayString(c.company)}</option>)}
-                                        </select>
-                                        <button type="button" onClick={() => setIsClientModalOpen(true)} title="Tambah Syarikat Baru" className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-sm font-bold rounded-sm hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600">
-                                            + Baru
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Company / Agency <span className="text-red-500">*</span>
+                                        </label>
+                                        <button type="button" onClick={() => setIsClientModalOpen(true)} title="Tambah Syarikat Baru" className="text-xs px-2 py-1 bg-pbi-primary text-white font-medium rounded-sm hover:bg-blue-600 shadow-sm transition-colors">
+                                            + Klien Baru
                                         </button>
                                     </div>
+                                    <select name="company" value={formData.company || ''} onChange={handleChange} required
+                                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 focus:outline-none focus:border-pbi-primary focus:ring-1 focus:ring-pbi-primary">
+                                        <option value="">-- Sila Pilih --</option>
+                                        {clients.map((c, idx) => <option key={idx} value={cleanArrayString(c.company)}>{cleanArrayString(c.company)}</option>)}
+                                    </select>
                                 </div>
 
                                 <InputGroup label="Vehicle (No Plat)" name="vehicle" value={formData.vehicle} onChange={handleChange} required />
@@ -823,7 +829,10 @@
             return (
                 <div className="h-full w-full flex flex-col md:flex-row bg-pbi-light dark:bg-pbi-dark relative overflow-hidden">
                     <div className="md:hidden flex items-center justify-between p-4 bg-pbi-cardLight dark:bg-pbi-cardDark border-b border-gray-200 dark:border-gray-800 z-40 flex-shrink-0 pbi-shadow">
-                        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pbi-primary to-blue-400">E-Perolehan</h1>
+                        <div className="flex items-center space-x-3">
+                            <img src="https://i.postimg.cc/Jzd5bvTC/image.png" alt="Prima First Auto Logo" className="w-8 h-8 rounded-full object-cover shadow-sm" />
+                            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pbi-primary to-blue-400">E-Perolehan</h1>
+                        </div>
                         <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-500">
                             {isDarkMode ? <IconSun /> : <IconMoon />}
                         </button>
@@ -831,7 +840,12 @@
 
                     <aside className={`hidden md:flex flex-col bg-pbi-cardLight dark:bg-pbi-cardDark border-r border-gray-200 dark:border-gray-800 flex-shrink-0 z-10 pbi-shadow transition-all duration-300 h-full ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
                         <div className={`p-4 border-b border-gray-200 dark:border-gray-800 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
-                            {!isSidebarCollapsed && <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pbi-primary to-blue-400 truncate">E-Perolehan</h1>}
+                            {!isSidebarCollapsed && (
+                                <div className="flex items-center space-x-3 overflow-hidden">
+                                    <img src="https://i.postimg.cc/Jzd5bvTC/image.png" alt="Prima First Auto Logo" className="w-8 h-8 rounded-full object-cover flex-shrink-0 shadow-sm" />
+                                    <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pbi-primary to-blue-400 truncate">E-Perolehan</h1>
+                                </div>
+                            )}
                             <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-500"><IconMenu /></button>
                         </div>
                         <nav className="p-4 space-y-2 flex-1">
@@ -864,7 +878,9 @@
                                         <p className="text-sm font-bold">Admin Portal</p>
                                         <p className="text-xs text-gray-500">Prima First Auto</p>
                                     </div>
-                                    <div className="h-10 w-10 rounded-full bg-pbi-primary flex items-center justify-center text-white font-bold">AD</div>
+                                    <div className="h-10 w-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center border-2 border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+                                        <img src="https://i.postimg.cc/Jzd5bvTC/image.png" alt="Admin Profile" className="w-full h-full object-cover" />
+                                    </div>
                                 </div>
                             </header>
 
