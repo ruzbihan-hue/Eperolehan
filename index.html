@@ -95,11 +95,9 @@
         <p style="color:#555; font-size:14px;">Memuatkan dashboard...</p>
     </div>
 
-    <!-- Friendly fallback if a script fails to load or a runtime error happens before React can render -->
+    <!-- Friendly fallback if a script fails to load -->
     <div id="boot-error">
         <h2>Dashboard tak dapat dimuatkan</h2>
-        <p>Kemungkinan sebab: sambungan internet terputus semasa memuatkan library (React/Tailwind/Recharts dari CDN), atau fail ini dibuka terus dari GitHub (bukan melalui GitHub Pages).</p>
-        <p><strong>Cadangan:</strong> pastikan fail ini dihoskan melalui GitHub Pages (Settings &rarr; Pages) dan diakses melalui URL <code>https://&lt;username&gt;.github.io/&lt;repo&gt;/</code>, bukan URL <code>github.com/.../blob/...</code>.</p>
         <p>Detail teknikal:</p>
         <pre id="boot-error-detail"></pre>
     </div>
@@ -107,7 +105,6 @@
     <div id="root" class="h-full"></div>
 
     <script>
-        // Catch any error that happens before React mounts (missing CDN scripts, etc.)
         window.addEventListener('error', function (e) {
             var rootEl = document.getElementById('root');
             var mounted = rootEl && rootEl.children.length > 0;
@@ -129,7 +126,6 @@
         const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } = Recharts;
         const chartsAvailable = Boolean(ResponsiveContainer && BarChart && PieChart);
 
-        // --- ERROR BOUNDARY: catches render-time errors so we never show a silent blank page ---
         class ErrorBoundary extends Component {
             constructor(props) {
                 super(props);
@@ -147,18 +143,8 @@
                         <div className="h-full w-full flex items-center justify-center p-8 bg-pbi-light dark:bg-pbi-dark">
                             <div className="max-w-lg bg-white dark:bg-pbi-cardDark p-6 rounded-sm pbi-shadow border-l-4 border-pbi-danger">
                                 <h2 className="text-lg font-bold text-pbi-danger mb-2">Ralat pada dashboard</h2>
-                                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                                    Sesuatu tak kena semasa memaparkan bahagian ini. Cuba refresh halaman ini.
-                                </p>
-                                <pre className="text-xs bg-gray-50 dark:bg-gray-900 p-2 rounded-sm overflow-auto max-h-40">
-                                    {String(this.state.error && this.state.error.message)}
-                                </pre>
-                                <button
-                                    onClick={() => window.location.reload()}
-                                    className="mt-3 px-4 py-2 bg-pbi-primary text-white rounded-sm text-sm hover:bg-blue-600"
-                                >
-                                    Refresh Halaman
-                                </button>
+                                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">Sesuatu tak kena semasa memaparkan bahagian ini. Cuba refresh halaman ini.</p>
+                                <button onClick={() => window.location.reload()} className="mt-3 px-4 py-2 bg-pbi-primary text-white rounded-sm text-sm hover:bg-blue-600">Refresh Halaman</button>
                             </div>
                         </div>
                     );
@@ -167,78 +153,215 @@
             }
         }
 
-        // --- ICONS (SVG) ---
         const IconDashboard = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>;
         const IconIntake = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" x2="12" y1="18" y2="12"/><line x1="9" x2="15" y1="15" y2="15"/></svg>;
         const IconOperation = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>;
         const IconClaim = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h4l2-9 5 18 3-10h6"/></svg>;
+        const IconUsers = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
         const IconMoon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>;
         const IconSun = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>;
         const IconClose = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
         const IconMenu = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>;
 
-        // --- CONSTANTS ---
-        // NOTE: these option lists MUST match the values used in mock data below,
-        // otherwise pre-filled dropdowns will render blank on edit.
         const INVOICE_DELIVERY_OPTIONS = ['Online (Portal E-Perolehan)', 'Hand Delivery', 'Pos/Kurier'];
 
-        // --- MOCK DATA ---
-        const initialJobs = [
-            {
-                quotationNumber: 'QTN-1001',
-                company: 'Jabatan Kesihatan', vehicle: 'WAA 1234', branch: 'Selangor', dateIntake: '2026-06-01', jobOrderType: 'Job Order', actionType: 'Proceed', quotationAmount: '2500', intakeStatus: 'Proceed',
-                picForeman: 'Ahmad', startOperate: '2026-06-02', finishOperate: '2026-06-04', operationStatus: 'Completed', operationRemark: 'Servis enjin major',
-                invoiceDate: '2026-06-05', invoiceDelivery: 'Online (Portal E-Perolehan)', collectionStatus: 'Payment Received', amountCollection: '2500', claimRemark: 'EFT Cleared'
-            },
-            {
-                quotationNumber: 'QTN-1002',
-                company: 'Majlis Perbandaran', vehicle: 'BXX 999', branch: 'Kuala Lumpur', dateIntake: '2026-06-08', jobOrderType: 'Verbal', actionType: 'Inspection', quotationAmount: '800', intakeStatus: 'Pending',
-                picForeman: '', startOperate: '', finishOperate: '', operationStatus: '', operationRemark: '',
-                invoiceDate: '', invoiceDelivery: '', collectionStatus: '', amountCollection: '', claimRemark: ''
-            },
-            {
-                quotationNumber: 'QTN-1003',
-                company: 'Kementerian Dalam Negeri', vehicle: 'JMW 5050', branch: 'Johor', dateIntake: '2026-05-20', jobOrderType: 'Job Order', actionType: 'Proceed', quotationAmount: '5400', intakeStatus: 'Proceed',
-                picForeman: 'Raju', startOperate: '2026-05-21', finishOperate: '2026-05-25', operationStatus: 'Completed', operationRemark: 'Tukar tayar 6 biji',
-                invoiceDate: '2026-05-26', invoiceDelivery: 'Hand Delivery', collectionStatus: '', amountCollection: '', claimRemark: '' // Should become Outstanding
-            },
-            {
-                quotationNumber: 'QTN-1004',
-                company: 'Jabatan Kerja Raya', vehicle: 'PQR 77', branch: 'Penang', dateIntake: '2026-06-05', jobOrderType: 'Job Order', actionType: 'Proceed', quotationAmount: '1200', intakeStatus: 'Proceed',
-                picForeman: 'Ah Chong', startOperate: '2026-06-06', finishOperate: '', operationStatus: 'In Progress', operationRemark: 'Tunggu spare part',
-                invoiceDate: '', invoiceDelivery: '', collectionStatus: '', amountCollection: '', claimRemark: ''
-            }
-        ];
+        // Sila masukkan URL Web App Apps Script anda di sini:
+        const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8Ql6bJgDMLwNn1OyS4msd6ycVv5nxyd5PZMINHchgFPmeKRP0O1B9REEQFJl9R0tp/exec'; 
 
-        // --- HELPER FUNCTIONS ---
+        // Status Claim helper
         const calculateClaimStatus = (invoiceDate, currentStatus) => {
             if (currentStatus === 'Payment Received') return 'Payment Received';
             if (!invoiceDate) return 'Pending Invoice';
-
-            const invDate = new Date(invoiceDate);
-            const today = new Date();
-            const diffTime = today - invDate;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays > 7) return 'Outstanding';
-            return 'Pending Payment';
+            const diffDays = Math.ceil((new Date() - new Date(invoiceDate)) / (1000 * 60 * 60 * 24));
+            return diffDays > 7 ? 'Outstanding' : 'Pending Payment';
         };
 
-        // --- COMPONENTS ---
+        // Fungsi pembersih JSON stringified seperti ["Puan Nafishah"] dari sheet asal
+        const cleanArrayString = (str) => {
+            if (!str) return '-';
+            if (typeof str !== 'string') return String(str);
+            try {
+                const parsed = JSON.parse(str);
+                if (Array.isArray(parsed)) return parsed.join(', '); // Gabungkan dengan koma
+                return str;
+            } catch(e) {
+                return str; // Jika bukan format JSON, papar sahaja teks biasa
+            }
+        };
 
-        const ChartFallback = () => (
-            <div className="flex items-center justify-center h-full w-full text-gray-500 text-sm text-center px-4">
-                Carta tidak dapat dimuatkan (sila semak capaian internet ke unpkg.com / Recharts CDN).
+        const Modal = ({ isOpen, onClose, title, children, zIndex = "z-50" }) => {
+            if (!isOpen) return null;
+            return (
+                <div className={`fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 ${zIndex}`}>
+                    <div className="bg-pbi-cardLight dark:bg-pbi-cardDark w-full max-w-2xl rounded-sm pbi-shadow flex flex-col max-h-[90vh]">
+                        <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 className="text-lg font-semibold">{title}</h3>
+                            <button onClick={onClose} className="text-gray-500 hover:text-red-500"><IconClose /></button>
+                        </div>
+                        <div className="p-4 overflow-y-auto flex-1">
+                            {children}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const InputGroup = ({ label, type = "text", name, value, onChange, required, options }) => (
+            <div className="mb-4">
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{label} {required && <span className="text-red-500">*</span>}</label>
+                {type === 'select' ? (
+                    <select name={name} value={value || ''} onChange={onChange} required={required}
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 focus:outline-none focus:border-pbi-primary focus:ring-1">
+                        <option value="">-- Sila Pilih --</option>
+                        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                ) : type === 'textarea' ? (
+                    <textarea name={name} value={value || ''} onChange={onChange} required={required} rows="3"
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 focus:outline-none focus:border-pbi-primary focus:ring-1"></textarea>
+                ) : (
+                    <input type={type} name={name} value={value || ''} onChange={onChange} required={required}
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 focus:outline-none focus:border-pbi-primary focus:ring-1" />
+                )}
             </div>
         );
 
-        // 1. Dashboard Component
+        const FilterBar = ({ companies, statuses, filterCompany, setFilterCompany, filterStatus, setFilterStatus }) => (
+            <div className="flex flex-col md:flex-row gap-4 mb-4 bg-white dark:bg-gray-800 p-4 rounded-sm pbi-shadow border border-gray-200 dark:border-gray-700">
+                <div className="flex-1">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Tapis Syarikat / Agensi</label>
+                    <select value={filterCompany} onChange={(e) => setFilterCompany(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-sm">
+                        <option value="">Semua Syarikat</option>
+                        {companies.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                </div>
+                {statuses && (
+                    <div className="flex-1">
+                        <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Tapis Status</label>
+                        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-sm">
+                            <option value="">Semua Status</option>
+                            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                    </div>
+                )}
+            </div>
+        );
+
+        const ClientFormModal = ({ isOpen, onClose, onSave, initialData }) => {
+            const [formData, setFormData] = useState({});
+            useEffect(() => { 
+                if (initialData) {
+                    const cleanedData = {};
+                    Object.keys(initialData).forEach(key => {
+                        cleanedData[key] = cleanArrayString(initialData[key]);
+                        if (cleanedData[key] === '-') cleanedData[key] = ''; // kosongkan jika sengkang
+                    });
+                    setFormData(cleanedData); 
+                } else {
+                    setFormData({}); 
+                }
+            }, [initialData, isOpen]);
+
+            const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+            
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!formData.company) return;
+                onSave(formData);
+                onClose();
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title={initialData?.company ? "Kemaskini Maklumat Klien" : "Tambah Klien Baharu"} zIndex="z-[60]">
+                    <form onSubmit={handleSubmit}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="md:col-span-2">
+                                <InputGroup label="Nama Syarikat / Agensi" name="company" value={formData.company} onChange={handleChange} required />
+                            </div>
+                            <div className="md:col-span-2">
+                                <InputGroup label="Alamat Penuh" type="textarea" name="address" value={formData.address} onChange={handleChange} />
+                            </div>
+                            <InputGroup label="Cawangan / Lokasi" name="branch" value={formData.branch} onChange={handleChange} />
+                            <InputGroup label="Nama PIC (Person In Charge)" name="picName" value={formData.picName} onChange={handleChange} />
+                            <InputGroup label="No. Tel (Pejabat)" name="telOffice" value={formData.telOffice} onChange={handleChange} />
+                            <InputGroup label="No. Tel (Bimbit / Mobile)" name="telMobile" value={formData.telMobile} onChange={handleChange} />
+                            <InputGroup label="Alamat Emel" type="email" name="email" value={formData.email} onChange={handleChange} />
+                            <InputGroup label="Pautan Portal (URL)" name="portalLink" value={formData.portalLink} onChange={handleChange} />
+                            <InputGroup label="Nama Pengguna (Username)" name="username" value={formData.username} onChange={handleChange} />
+                            <InputGroup label="Kata Laluan (Password)" name="password" value={formData.password} onChange={handleChange} />
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                            <button type="button" onClick={onClose} className="mr-3 px-4 py-2 border border-gray-300 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800">Batal</button>
+                            <button type="submit" className="px-4 py-2 bg-pbi-primary text-white rounded-sm hover:bg-blue-600">Simpan Klien</button>
+                        </div>
+                    </form>
+                </Modal>
+            );
+        };
+
+        const ClientReferences = ({ clients, onSaveClient }) => {
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [selectedClient, setSelectedClient] = useState(null);
+            const [filterCompany, setFilterCompany] = useState('');
+
+            const uniqueCompanies = [...new Set(clients.map(c => c.company))].filter(Boolean);
+            const displayClients = clients.filter(c => filterCompany ? c.company === filterCompany : true);
+
+            const handleOpenModal = (client = null) => {
+                setSelectedClient(client);
+                setIsModalOpen(true);
+            };
+
+            return (
+                <div className="animate-fade-in">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-semibold">Client References</h2>
+                        <button onClick={() => handleOpenModal()} className="bg-pbi-primary hover:bg-blue-600 text-white px-4 py-2 rounded-sm text-sm font-medium transition-colors">
+                            + Tambah Klien
+                        </button>
+                    </div>
+
+                    <FilterBar companies={uniqueCompanies} filterCompany={filterCompany} setFilterCompany={setFilterCompany} />
+
+                    <div className="bg-pbi-cardLight dark:bg-pbi-cardDark rounded-sm pbi-shadow overflow-x-auto">
+                        <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                                <tr>
+                                    <th className="p-3 font-semibold">Syarikat / Agensi</th>
+                                    <th className="p-3 font-semibold">Cawangan</th>
+                                    <th className="p-3 font-semibold">PIC Name</th>
+                                    <th className="p-3 font-semibold">No. Telefon</th>
+                                    <th className="p-3 font-semibold">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {displayClients.map((client, idx) => (
+                                    <tr key={idx} className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${idx % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/30'}`}>
+                                        <td className="p-3 font-medium text-pbi-primary">{cleanArrayString(client.company)}</td>
+                                        <td className="p-3">{cleanArrayString(client.branch)}</td>
+                                        <td className="p-3">{cleanArrayString(client.picName)}</td>
+                                        <td className="p-3">{cleanArrayString(client.telMobile) !== '-' ? cleanArrayString(client.telMobile) : cleanArrayString(client.telOffice)}</td>
+                                        <td className="p-3">
+                                            <button onClick={() => handleOpenModal(client)} className="text-pbi-primary hover:underline text-sm font-medium">Lihat & Kemaskini</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {displayClients.length === 0 && (
+                                    <tr><td colSpan="5" className="p-4 text-center text-gray-500">Tiada rekod rujukan klien dijumpai.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <ClientFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={onSaveClient} initialData={selectedClient} />
+                </div>
+            );
+        };
+
         const Dashboard = ({ jobs }) => {
             const processedJobs = jobs.map(job => ({
                 ...job,
                 dynamicCollectionStatus: calculateClaimStatus(job.invoiceDate, job.collectionStatus)
             }));
-
             const totalSales = processedJobs.reduce((sum, job) => job.collectionStatus === 'Payment Received' ? sum + Number(job.amountCollection || 0) : sum, 0);
             const outstandingAmount = processedJobs.reduce((sum, job) => job.dynamicCollectionStatus === 'Outstanding' ? sum + Number(job.quotationAmount || 0) : sum, 0);
             const activeJobs = processedJobs.filter(j => j.intakeStatus === 'Proceed' && j.operationStatus !== 'Completed').length;
@@ -261,31 +384,29 @@
             return (
                 <div className="space-y-6 animate-fade-in">
                     <h2 className="text-2xl font-semibold mb-6">Executive Dashboard</h2>
-
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="bg-pbi-cardLight dark:bg-pbi-cardDark p-4 rounded-sm pbi-shadow border-l-4 border-pbi-success">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Total Kutipan Diterima</p>
+                            <p className="text-sm text-gray-500">Total Kutipan Diterima</p>
                             <h3 className="text-2xl font-bold mt-1">RM {totalSales.toLocaleString()}</h3>
                         </div>
                         <div className="bg-pbi-cardLight dark:bg-pbi-cardDark p-4 rounded-sm pbi-shadow border-l-4 border-pbi-danger">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Outstanding (&gt; 7 Hari)</p>
+                            <p className="text-sm text-gray-500">Outstanding (&gt; 7 Hari)</p>
                             <h3 className="text-2xl font-bold mt-1">RM {outstandingAmount.toLocaleString()}</h3>
                         </div>
                         <div className="bg-pbi-cardLight dark:bg-pbi-cardDark p-4 rounded-sm pbi-shadow border-l-4 border-pbi-primary">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Job Dalam Proses (Operation)</p>
+                            <p className="text-sm text-gray-500">Job Dalam Proses (Operation)</p>
                             <h3 className="text-2xl font-bold mt-1">{activeJobs}</h3>
                         </div>
                         <div className="bg-pbi-cardLight dark:bg-pbi-cardDark p-4 rounded-sm pbi-shadow border-l-4 border-pbi-warning">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Job Selesai (Menunggu Bayaran)</p>
+                            <p className="text-sm text-gray-500">Job Selesai (Menunggu Bayaran)</p>
                             <h3 className="text-2xl font-bold mt-1">{completedJobs}</h3>
                         </div>
                     </div>
-
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="bg-pbi-cardLight dark:bg-pbi-cardDark p-4 rounded-sm pbi-shadow h-80 flex flex-col">
                             <h3 className="text-sm font-semibold mb-4 text-center">Status Job Keseluruhan</h3>
                             <div className="flex-1 w-full h-full min-h-[200px]">
-                                {chartsAvailable ? (
+                                {chartsAvailable && (
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
                                             <Pie data={statusData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" label>
@@ -295,13 +416,13 @@
                                             <Legend />
                                         </PieChart>
                                     </ResponsiveContainer>
-                                ) : <ChartFallback />}
+                                )}
                             </div>
                         </div>
                         <div className="bg-pbi-cardLight dark:bg-pbi-cardDark p-4 rounded-sm pbi-shadow h-80 flex flex-col">
                             <h3 className="text-sm font-semibold mb-4 text-center">Nilai Quotation Mengikut Agensi</h3>
                             <div className="flex-1 w-full h-full min-h-[200px]">
-                                {chartsAvailable ? (
+                                {chartsAvailable && (
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={agencyData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                                             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -311,7 +432,7 @@
                                             <Bar dataKey="Quotation" fill="#118dff" radius={[2, 2, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
-                                ) : <ChartFallback />}
+                                )}
                             </div>
                         </div>
                     </div>
@@ -319,67 +440,9 @@
             );
         };
 
-        // Modal Wrapper Component
-        const Modal = ({ isOpen, onClose, title, children }) => {
-            if (!isOpen) return null;
-            return (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-                    <div className="bg-pbi-cardLight dark:bg-pbi-cardDark w-full max-w-2xl rounded-sm pbi-shadow flex flex-col max-h-[90vh]">
-                        <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-                            <h3 className="text-lg font-semibold">{title}</h3>
-                            <button onClick={onClose} className="text-gray-500 hover:text-red-500"><IconClose /></button>
-                        </div>
-                        <div className="p-4 overflow-y-auto flex-1">
-                            {children}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // Shared Input Component
-        const InputGroup = ({ label, type = "text", name, value, onChange, required, options }) => (
-            <div className="mb-4">
-                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{label} {required && <span className="text-red-500">*</span>}</label>
-                {type === 'select' ? (
-                    <select name={name} value={value || ''} onChange={onChange} required={required}
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-pbi-primary focus:ring-1 focus:ring-pbi-primary">
-                        <option value="">-- Sila Pilih --</option>
-                        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                    </select>
-                ) : type === 'textarea' ? (
-                    <textarea name={name} value={value || ''} onChange={onChange} required={required} rows="3"
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-pbi-primary focus:ring-1 focus:ring-pbi-primary"></textarea>
-                ) : (
-                    <input type={type} name={name} value={value || ''} onChange={onChange} required={required}
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-pbi-primary focus:ring-1 focus:ring-pbi-primary" />
-                )}
-            </div>
-        );
-
-        // Shared Filter Component
-        const FilterBar = ({ companies, statuses, filterCompany, setFilterCompany, filterStatus, setFilterStatus }) => (
-            <div className="flex flex-col md:flex-row gap-4 mb-4 bg-white dark:bg-gray-800 p-4 rounded-sm pbi-shadow border border-gray-200 dark:border-gray-700">
-                <div className="flex-1">
-                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Tapis Syarikat / Agensi</label>
-                    <select value={filterCompany} onChange={(e) => setFilterCompany(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-pbi-primary focus:ring-1 focus:ring-pbi-primary text-sm">
-                        <option value="">Semua Syarikat</option>
-                        {companies.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                </div>
-                <div className="flex-1">
-                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Tapis Status</label>
-                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-pbi-primary focus:ring-1 focus:ring-pbi-primary text-sm">
-                        <option value="">Semua Status</option>
-                        {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                </div>
-            </div>
-        );
-
-        // 2. Job Intake Component
-        const JobIntake = ({ jobs, setJobs }) => {
+        const JobIntake = ({ jobs, clients, onSaveJob, onSaveClient }) => {
             const [isModalOpen, setIsModalOpen] = useState(false);
+            const [isClientModalOpen, setIsClientModalOpen] = useState(false);
             const [formData, setFormData] = useState({});
             const [filterCompany, setFilterCompany] = useState('');
             const [filterStatus, setFilterStatus] = useState('');
@@ -416,13 +479,14 @@
             const handleSubmit = (e) => {
                 e.preventDefault();
                 if (!formData.company || !formData.vehicle || !formData.quotationAmount) return;
-                const exists = jobs.find(j => j.quotationNumber === formData.quotationNumber);
-                if (exists) {
-                    setJobs(jobs.map(j => j.quotationNumber === formData.quotationNumber ? formData : j));
-                } else {
-                    setJobs([formData, ...jobs]);
-                }
+                onSaveJob(formData);
                 setIsModalOpen(false);
+            };
+
+            // Apabila klien baru ditambah dari borang job, update form state
+            const handleClientSavedLocally = (clientData) => {
+                onSaveClient(clientData);
+                setFormData({ ...formData, company: clientData.company });
             };
 
             return (
@@ -472,11 +536,27 @@
                         </table>
                     </div>
 
+                    {/* Modal Job Intake */}
                     <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Borang Job Intake">
                         <form onSubmit={handleSubmit}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <InputGroup label="No. Sebutharga" name="quotationNumber" value={formData.quotationNumber} onChange={handleChange} required />
-                                <InputGroup label="Company / Agency" name="company" value={formData.company} onChange={handleChange} required />
+                                
+                                {/* Custom Select Input for Company with Add Button */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Company / Agency <span className="text-red-500">*</span></label>
+                                    <div className="flex gap-2">
+                                        <select name="company" value={formData.company || ''} onChange={handleChange} required
+                                            className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 focus:outline-none focus:border-pbi-primary focus:ring-1 focus:ring-pbi-primary">
+                                            <option value="">-- Sila Pilih --</option>
+                                            {clients.map((c, idx) => <option key={idx} value={cleanArrayString(c.company)}>{cleanArrayString(c.company)}</option>)}
+                                        </select>
+                                        <button type="button" onClick={() => setIsClientModalOpen(true)} title="Tambah Syarikat Baru" className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-sm font-bold rounded-sm hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600">
+                                            + Baru
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <InputGroup label="Vehicle (No Plat)" name="vehicle" value={formData.vehicle} onChange={handleChange} required />
                                 <InputGroup label="Branch" name="branch" value={formData.branch} onChange={handleChange} required />
                                 <InputGroup label="Tarikh Intake" type="date" name="dateIntake" value={formData.dateIntake} onChange={handleChange} required />
@@ -491,51 +571,42 @@
                             </div>
                         </form>
                     </Modal>
+
+                    {/* Nested Client Modal dipanggil terus dari Job Intake */}
+                    <ClientFormModal isOpen={isClientModalOpen} onClose={() => setIsClientModalOpen(false)} onSave={handleClientSavedLocally} initialData={{}} />
                 </div>
             );
         };
 
-        // 3. Operation Component
-        const Operation = ({ jobs, setJobs }) => {
+        const Operation = ({ jobs, onSaveJob }) => {
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [formData, setFormData] = useState({});
             const [filterCompany, setFilterCompany] = useState('');
             const [filterStatus, setFilterStatus] = useState('');
 
             const baseOperationJobs = jobs.filter(j => j.intakeStatus === 'Proceed');
-
             const uniqueCompanies = [...new Set(baseOperationJobs.map(j => j.company))].filter(Boolean);
             const uniqueStatuses = ['Pending', 'In Progress', 'Completed'];
 
             const displayJobs = useMemo(() => {
                 let filtered = baseOperationJobs.filter(j => {
                     const currentStatus = j.operationStatus || 'Pending';
-                    return (filterCompany ? j.company === filterCompany : true) &&
-                           (filterStatus ? currentStatus === filterStatus : true);
+                    return (filterCompany ? j.company === filterCompany : true) && (filterStatus ? currentStatus === filterStatus : true);
                 });
                 const order = { 'Pending': 1, 'In Progress': 2, 'Completed': 3 };
                 return filtered.sort((a, b) => (order[a.operationStatus || 'Pending'] || 99) - (order[b.operationStatus || 'Pending'] || 99));
             }, [baseOperationJobs, filterCompany, filterStatus]);
 
-            const handleOpenModal = (job) => {
-                setFormData(job);
-                setIsModalOpen(true);
-            };
-
-            const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
             const handleSubmit = (e) => {
                 e.preventDefault();
-                setJobs(jobs.map(j => j.quotationNumber === formData.quotationNumber ? formData : j));
+                onSaveJob(formData);
                 setIsModalOpen(false);
             };
 
             return (
                 <div className="animate-fade-in">
                     <h2 className="text-2xl font-semibold mb-6">Operation Department</h2>
-
                     <FilterBar companies={uniqueCompanies} statuses={uniqueStatuses} filterCompany={filterCompany} setFilterCompany={setFilterCompany} filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
-
                     <div className="bg-pbi-cardLight dark:bg-pbi-cardDark rounded-sm pbi-shadow overflow-x-auto">
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
@@ -563,26 +634,23 @@
                                             </span>
                                         </td>
                                         <td className="p-3">
-                                            <button onClick={() => handleOpenModal(job)} className="text-pbi-primary hover:underline text-sm font-medium">Update Kerja</button>
+                                            <button onClick={() => {setFormData(job); setIsModalOpen(true);}} className="text-pbi-primary hover:underline text-sm font-medium">Update Kerja</button>
                                         </td>
                                     </tr>
                                 ))}
-                                {displayJobs.length === 0 && (
-                                    <tr><td colSpan="7" className="p-4 text-center text-gray-500">Tiada job ditemui. (Job perlu berstatus "Proceed" di Job Intake dahulu.)</td></tr>
-                                )}
+                                {displayJobs.length === 0 && <tr><td colSpan="7" className="p-4 text-center text-gray-500">Tiada job ditemui. (Job perlu berstatus "Proceed")</td></tr>}
                             </tbody>
                         </table>
                     </div>
-
                     <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Update Operasi: ${formData.quotationNumber || ''}`}>
                         <form onSubmit={handleSubmit}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <InputGroup label="PIC Foreman" name="picForeman" value={formData.picForeman} onChange={handleChange} required />
-                                <InputGroup label="Status Operation Job" type="select" name="operationStatus" value={formData.operationStatus} onChange={handleChange} options={['Pending', 'In Progress', 'Completed']} required />
-                                <InputGroup label="Start Operate" type="date" name="startOperate" value={formData.startOperate} onChange={handleChange} />
-                                <InputGroup label="Finish Operate" type="date" name="finishOperate" value={formData.finishOperate} onChange={handleChange} />
+                                <InputGroup label="PIC Foreman" name="picForeman" value={formData.picForeman} onChange={(e) => setFormData({...formData, picForeman: e.target.value})} required />
+                                <InputGroup label="Status Operation Job" type="select" name="operationStatus" value={formData.operationStatus} onChange={(e) => setFormData({...formData, operationStatus: e.target.value})} options={['Pending', 'In Progress', 'Completed']} required />
+                                <InputGroup label="Start Operate" type="date" name="startOperate" value={formData.startOperate} onChange={(e) => setFormData({...formData, startOperate: e.target.value})} />
+                                <InputGroup label="Finish Operate" type="date" name="finishOperate" value={formData.finishOperate} onChange={(e) => setFormData({...formData, finishOperate: e.target.value})} />
                                 <div className="md:col-span-2">
-                                    <InputGroup label="Remark (Jika perlu)" type="textarea" name="operationRemark" value={formData.operationRemark} onChange={handleChange} />
+                                    <InputGroup label="Remark (Jika perlu)" type="textarea" name="operationRemark" value={formData.operationRemark} onChange={(e) => setFormData({...formData, operationRemark: e.target.value})} />
                                 </div>
                             </div>
                             <div className="mt-6 flex justify-end">
@@ -595,56 +663,35 @@
             );
         };
 
-        // 4. Report & Claim Component
-        const ReportClaim = ({ jobs, setJobs }) => {
+        const ReportClaim = ({ jobs, onSaveJob }) => {
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [formData, setFormData] = useState({});
             const [filterCompany, setFilterCompany] = useState('');
             const [filterStatus, setFilterStatus] = useState('');
 
             const baseClaimJobs = jobs.filter(j => j.operationStatus === 'Completed').map(job => ({
-                ...job,
-                dynamicClaimStatus: calculateClaimStatus(job.invoiceDate, job.collectionStatus)
+                ...job, dynamicClaimStatus: calculateClaimStatus(job.invoiceDate, job.collectionStatus)
             }));
-
             const uniqueCompanies = [...new Set(baseClaimJobs.map(j => j.company))].filter(Boolean);
             const uniqueStatuses = ['Outstanding', 'Pending Invoice', 'Pending Payment', 'Payment Received'];
 
             const displayJobs = useMemo(() => {
-                let filtered = baseClaimJobs.filter(j => {
-                    return (filterCompany ? j.company === filterCompany : true) &&
-                           (filterStatus ? j.dynamicClaimStatus === filterStatus : true);
-                });
+                let filtered = baseClaimJobs.filter(j => (filterCompany ? j.company === filterCompany : true) && (filterStatus ? j.dynamicClaimStatus === filterStatus : true));
                 const order = { 'Outstanding': 1, 'Pending Invoice': 2, 'Pending Payment': 2, 'Payment Received': 3 };
                 return filtered.sort((a, b) => (order[a.dynamicClaimStatus] || 99) - (order[b.dynamicClaimStatus] || 99));
             }, [baseClaimJobs, filterCompany, filterStatus]);
 
-            const handleOpenModal = (job) => {
-                const claimStatus = calculateClaimStatus(job.invoiceDate, job.collectionStatus);
-                setFormData({ ...job, dynamicClaimStatus: claimStatus });
-                setIsModalOpen(true);
-            };
-
-            const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-            const handleUploadInvoice = () => {
-                const today = new Date().toISOString().split('T')[0];
-                setFormData({ ...formData, invoiceDate: today });
-            };
-
             const handleSubmit = (e) => {
                 e.preventDefault();
                 const { dynamicClaimStatus, ...toSave } = formData;
-                setJobs(jobs.map(j => j.quotationNumber === toSave.quotationNumber ? toSave : j));
+                onSaveJob(toSave);
                 setIsModalOpen(false);
             };
 
             return (
                 <div className="animate-fade-in">
                     <h2 className="text-2xl font-semibold mb-6">Report &amp; Claim</h2>
-
                     <FilterBar companies={uniqueCompanies} statuses={uniqueStatuses} filterCompany={filterCompany} setFilterCompany={setFilterCompany} filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
-
                     <div className="bg-pbi-cardLight dark:bg-pbi-cardDark rounded-sm pbi-shadow overflow-x-auto">
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
@@ -659,63 +706,43 @@
                             </thead>
                             <tbody>
                                 {displayJobs.map((job, idx) => {
-                                    const isOutstanding = job.dynamicClaimStatus === 'Outstanding';
                                     const isPaid = job.dynamicClaimStatus === 'Payment Received';
-
+                                    const isOut = job.dynamicClaimStatus === 'Outstanding';
                                     return (
                                         <tr key={job.quotationNumber} className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${idx % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/30'}`}>
                                             <td className="p-3 font-medium text-pbi-primary">{job.quotationNumber}</td>
                                             <td className="p-3">{job.company}</td>
-                                            <td className="p-3">{job.invoiceDate ? <span className="text-green-600 dark:text-green-400 font-medium">{job.invoiceDate} (Telah Upload)</span> : <span className="text-gray-400">Pending Upload</span>}</td>
+                                            <td className="p-3">{job.invoiceDate ? <span className="text-green-600">{job.invoiceDate}</span> : <span className="text-gray-400">Pending</span>}</td>
                                             <td className="p-3">
-                                                <span className={`px-2 py-1 text-xs rounded-full font-bold
-                                                    ${isPaid ? 'bg-green-100 text-green-800' :
-                                                      isOutstanding ? 'bg-red-100 text-red-800 animate-pulse' :
-                                                      'bg-yellow-100 text-yellow-800'}`}>
+                                                <span className={`px-2 py-1 text-xs rounded-full font-bold ${isPaid ? 'bg-green-100 text-green-800' : isOut ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-yellow-100 text-yellow-800'}`}>
                                                     {job.dynamicClaimStatus}
                                                 </span>
                                             </td>
                                             <td className="p-3">{job.amountCollection ? `RM ${job.amountCollection}` : '-'}</td>
                                             <td className="p-3">
-                                                <button onClick={() => handleOpenModal(job)} className="text-pbi-primary hover:underline text-sm font-medium">Urus Claim</button>
+                                                <button onClick={() => {setFormData({...job, dynamicClaimStatus: calculateClaimStatus(job.invoiceDate, job.collectionStatus)}); setIsModalOpen(true);}} className="text-pbi-primary hover:underline text-sm font-medium">Urus Claim</button>
                                             </td>
                                         </tr>
                                     );
                                 })}
-                                {displayJobs.length === 0 && (
-                                    <tr><td colSpan="6" className="p-4 text-center text-gray-500">Tiada job ditemui. (Job perlu berstatus "Completed" di Operation dahulu.)</td></tr>
-                                )}
+                                {displayJobs.length === 0 && <tr><td colSpan="6" className="p-4 text-center text-gray-500">Tiada job ditemui. (Job perlu berstatus "Completed" di Operation)</td></tr>}
                             </tbody>
                         </table>
                     </div>
-
                     <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Urus Claim & Invois: ${formData.quotationNumber || ''}`}>
                         <form onSubmit={handleSubmit}>
-                            <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-sm mb-4 border border-blue-100 dark:border-blue-800">
-                                <h4 className="font-semibold mb-2">Status Invois</h4>
-                                <div className="flex items-center justify-between flex-wrap gap-2">
-                                    <p className="text-sm">
-                                        Tarikh Upload: {formData.invoiceDate ? <strong className="text-green-600 dark:text-green-400">{formData.invoiceDate} (Completed)</strong> : <strong className="text-red-500">Pending</strong>}
-                                    </p>
-                                    {!formData.invoiceDate && (
-                                        <button type="button" onClick={handleUploadInvoice} className="bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 px-3 py-1 text-sm rounded-sm hover:bg-gray-700 transition">
-                                            Simulasi Upload Invois (Set Tarikh Hari Ini)
-                                        </button>
-                                    )}
-                                </div>
+                            <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-sm mb-4 border border-blue-100 dark:border-blue-800 flex justify-between items-center">
+                                <p className="text-sm">Tarikh Upload: {formData.invoiceDate ? <strong className="text-green-600">{formData.invoiceDate} (Completed)</strong> : <strong className="text-red-500">Pending</strong>}</p>
+                                {!formData.invoiceDate && <button type="button" onClick={() => setFormData({...formData, invoiceDate: new Date().toISOString().split('T')[0]})} className="bg-gray-800 text-white px-3 py-1 text-sm rounded-sm hover:bg-gray-700">Simulasi Upload Invois</button>}
                             </div>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <InputGroup label="Cara Penghantaran Invois" type="select" name="invoiceDelivery" value={formData.invoiceDelivery} onChange={handleChange} options={INVOICE_DELIVERY_OPTIONS} />
-                                <InputGroup label="Status Kutipan Koleksi" type="select" name="collectionStatus" value={formData.collectionStatus} onChange={handleChange} options={['Pending', 'Payment Received']} />
-                                <InputGroup label="Amount Collection Diterima (RM)" type="number" name="amountCollection" value={formData.amountCollection} onChange={handleChange} />
-                                <div className="md:col-span-2">
-                                    <InputGroup label="Remark Claim" type="textarea" name="claimRemark" value={formData.claimRemark} onChange={handleChange} />
-                                </div>
+                                <InputGroup label="Cara Penghantaran Invois" type="select" name="invoiceDelivery" value={formData.invoiceDelivery} onChange={e => setFormData({...formData, invoiceDelivery: e.target.value})} options={INVOICE_DELIVERY_OPTIONS} />
+                                <InputGroup label="Status Kutipan Koleksi" type="select" name="collectionStatus" value={formData.collectionStatus} onChange={e => setFormData({...formData, collectionStatus: e.target.value})} options={['Pending', 'Payment Received']} />
+                                <InputGroup label="Amount Collection Diterima (RM)" type="number" name="amountCollection" value={formData.amountCollection} onChange={e => setFormData({...formData, amountCollection: e.target.value})} />
+                                <div className="md:col-span-2"><InputGroup label="Remark Claim" type="textarea" name="claimRemark" value={formData.claimRemark} onChange={e => setFormData({...formData, claimRemark: e.target.value})} /></div>
                             </div>
-
                             <div className="mt-6 flex justify-end">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="mr-3 px-4 py-2 border border-gray-300 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800">Batal</button>
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="mr-3 px-4 py-2 border border-gray-300 rounded-sm">Batal</button>
                                 <button type="submit" className="px-4 py-2 bg-pbi-primary text-white rounded-sm hover:bg-blue-600">Simpan Maklumat Claim</button>
                             </div>
                         </form>
@@ -724,23 +751,70 @@
             );
         };
 
-        // --- MAIN APP COMPONENT ---
         const App = () => {
             const [activeTab, setActiveTab] = useState('dashboard');
             const [isDarkMode, setIsDarkMode] = useState(false);
             const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-            const [jobs, setJobs] = useState(initialJobs);
+            const [jobs, setJobs] = useState([]);
+            const [clients, setClients] = useState([]);
+            const [isLoading, setIsLoading] = useState(false);
+
+            useEffect(() => { document.documentElement.classList.toggle('dark', isDarkMode); }, [isDarkMode]);
 
             useEffect(() => {
-                if (isDarkMode) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
+                if (!APPSCRIPT_URL) return;
+                const fetchData = async () => {
+                    setIsLoading(true);
+                    try {
+                        const response = await fetch(APPSCRIPT_URL);
+                        const data = await response.json();
+                        // Handle format JSON baru: { jobs: [...], clients: [...] }
+                        if (data && !Array.isArray(data)) {
+                            setJobs(data.jobs || []);
+                            setClients(data.clients || []);
+                        } else if (Array.isArray(data)) {
+                            // Fallback jika backend lambat update (hanya return jobs)
+                            setJobs(data);
+                        }
+                    } catch (error) {
+                        console.error("Gagal menarik data dari Google Sheets:", error);
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+                fetchData();
+            }, []);
+
+            // Fungsi berpusat untuk simpan Job atau Client
+            const saveDataToDB = async (payload, type = 'job') => {
+                const dataToSave = { ...payload, type };
+                
+                // Optimistic UI Update
+                if (type === 'job') {
+                    const exists = jobs.find(j => j.quotationNumber === payload.quotationNumber);
+                    setJobs(exists ? jobs.map(j => j.quotationNumber === payload.quotationNumber ? payload : j) : [payload, ...jobs]);
+                } else if (type === 'client') {
+                    const exists = clients.find(c => c.company === payload.company);
+                    setClients(exists ? clients.map(c => c.company === payload.company ? payload : c) : [payload, ...clients]);
                 }
-            }, [isDarkMode]);
+
+                if (APPSCRIPT_URL) {
+                    try {
+                        await fetch(APPSCRIPT_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify(dataToSave)
+                        });
+                    } catch (error) {
+                        console.error("Gagal hantar data ke Google Sheets:", error);
+                        alert("Gagal menyelaraskan data. Sila semak internet anda.");
+                    }
+                }
+            };
 
             const tabs = [
                 { id: 'dashboard', label: 'Dashboard', icon: IconDashboard },
+                { id: 'references', label: 'Client References', icon: IconUsers },
                 { id: 'intake', label: 'Job Intake', icon: IconIntake },
                 { id: 'operation', label: 'Operation', icon: IconOperation },
                 { id: 'claim', label: 'Report & Claim', icon: IconClaim },
@@ -748,64 +822,42 @@
 
             return (
                 <div className="h-full w-full flex flex-col md:flex-row bg-pbi-light dark:bg-pbi-dark relative overflow-hidden">
-                    {/* Mobile Header (Top) */}
                     <div className="md:hidden flex items-center justify-between p-4 bg-pbi-cardLight dark:bg-pbi-cardDark border-b border-gray-200 dark:border-gray-800 z-40 flex-shrink-0 pbi-shadow">
-                        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pbi-primary to-blue-400">
-                            E-Perolehan
-                        </h1>
+                        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pbi-primary to-blue-400">E-Perolehan</h1>
                         <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-500">
                             {isDarkMode ? <IconSun /> : <IconMoon />}
                         </button>
                     </div>
 
-                    {/* Desktop Sidebar */}
-                    <aside className={`hidden md:flex flex-col bg-pbi-cardLight dark:bg-pbi-cardDark border-r border-gray-200 dark:border-gray-800 flex-shrink-0 z-10 pbi-shadow transition-all duration-300 ease-in-out h-full ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
+                    <aside className={`hidden md:flex flex-col bg-pbi-cardLight dark:bg-pbi-cardDark border-r border-gray-200 dark:border-gray-800 flex-shrink-0 z-10 pbi-shadow transition-all duration-300 h-full ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
                         <div className={`p-4 border-b border-gray-200 dark:border-gray-800 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
-                            {!isSidebarCollapsed && (
-                                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pbi-primary to-blue-400 truncate">
-                                    E-Perolehan
-                                </h1>
-                            )}
-                            <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-500" title={isSidebarCollapsed ? "Maximize Sidebar" : "Minimize Sidebar"}>
-                                <IconMenu />
-                            </button>
+                            {!isSidebarCollapsed && <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pbi-primary to-blue-400 truncate">E-Perolehan</h1>}
+                            <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-500"><IconMenu /></button>
                         </div>
                         <nav className="p-4 space-y-2 flex-1">
-                            {tabs.map(tab => {
-                                const Icon = tab.icon;
-                                const isActive = activeTab === tab.id;
-                                return (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        title={isSidebarCollapsed ? tab.label : ''}
-                                        className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-2.5 rounded-sm transition-colors text-sm font-medium ${
-                                            isActive
-                                            ? 'bg-pbi-primary/10 text-pbi-primary border-l-4 border-pbi-primary'
-                                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent'
-                                        }`}
-                                    >
-                                        <Icon />
-                                        {!isSidebarCollapsed && <span>{tab.label}</span>}
-                                    </button>
-                                );
-                            })}
+                            {tabs.map(tab => (
+                                <button key={tab.id} onClick={() => setActiveTab(tab.id)} title={isSidebarCollapsed ? tab.label : ''} className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-2.5 rounded-sm transition-colors text-sm font-medium ${activeTab === tab.id ? 'bg-pbi-primary/10 text-pbi-primary border-l-4 border-pbi-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 border-l-4 border-transparent'}`}>
+                                    <tab.icon />{!isSidebarCollapsed && <span>{tab.label}</span>}
+                                </button>
+                            ))}
                         </nav>
                         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-                            <button onClick={() => setIsDarkMode(!isDarkMode)} className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-3'} p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-500`} title="Tukar Tema">
+                            <button onClick={() => setIsDarkMode(!isDarkMode)} className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-3'} p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-500`}>
                                 {isDarkMode ? <IconSun /> : <IconMoon />}
                                 {!isSidebarCollapsed && <span className="text-sm font-medium">{isDarkMode ? 'Mod Terang' : 'Mod Gelap'}</span>}
                             </button>
                         </div>
                     </aside>
 
-                    {/* Kawasan Scroll Internal (Main Content) */}
                     <main className="flex-1 flex flex-col overflow-y-auto relative z-0 pb-16 md:pb-0">
                         <div className="flex-1 p-4 md:p-8 flex flex-col">
                             <header className="mb-8 flex justify-between items-center">
                                 <div>
                                     <h2 className="text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">Workspace</h2>
-                                    <h1 className="text-2xl md:text-3xl font-bold">{tabs.find(t => t.id === activeTab)?.label}</h1>
+                                    <div className="flex items-center space-x-3">
+                                        <h1 className="text-2xl md:text-3xl font-bold">{tabs.find(t => t.id === activeTab)?.label}</h1>
+                                        {isLoading && <span className="text-xs bg-pbi-primary text-white px-2 py-1 rounded-sm animate-pulse">Syncing...</span>}
+                                    </div>
                                 </div>
                                 <div className="flex items-center space-x-3">
                                     <div className="text-right hidden sm:block">
@@ -818,35 +870,24 @@
 
                             <div className="max-w-7xl mx-auto w-full flex-1">
                                 {activeTab === 'dashboard' && <Dashboard jobs={jobs} />}
-                                {activeTab === 'intake' && <JobIntake jobs={jobs} setJobs={setJobs} />}
-                                {activeTab === 'operation' && <Operation jobs={jobs} setJobs={setJobs} />}
-                                {activeTab === 'claim' && <ReportClaim jobs={jobs} setJobs={setJobs} />}
+                                {activeTab === 'references' && <ClientReferences clients={clients} onSaveClient={(data) => saveDataToDB(data, 'client')} />}
+                                {activeTab === 'intake' && <JobIntake jobs={jobs} clients={clients} onSaveJob={(data) => saveDataToDB(data, 'job')} onSaveClient={(data) => saveDataToDB(data, 'client')} />}
+                                {activeTab === 'operation' && <Operation jobs={jobs} onSaveJob={(data) => saveDataToDB(data, 'job')} />}
+                                {activeTab === 'claim' && <ReportClaim jobs={jobs} onSaveJob={(data) => saveDataToDB(data, 'job')} />}
                             </div>
                         </div>
-
                         <footer className="py-6 text-center text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800 bg-pbi-cardLight dark:bg-pbi-cardDark mt-auto shrink-0">
                             Copyright &copy; {new Date().getFullYear()} E Perolehan Prima First Auto Sdn Bhd.
                         </footer>
                     </main>
 
-                    {/* Mobile Bottom Navigation Bar (Absolute) */}
                     <nav className="md:hidden absolute bottom-0 left-0 right-0 w-full bg-pbi-cardLight dark:bg-pbi-cardDark border-t border-gray-200 dark:border-gray-800 z-50 flex justify-around items-center pbi-shadow pb-2 pt-2">
-                        {tabs.map(tab => {
-                            const Icon = tab.icon;
-                            const isActive = activeTab === tab.id;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex flex-col items-center justify-center w-full transition-colors ${isActive ? 'text-pbi-primary' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
-                                >
-                                    <div className={`p-1.5 rounded-full ${isActive ? 'bg-pbi-primary/10' : ''}`}>
-                                        <Icon />
-                                    </div>
-                                    <span className={`text-[10px] mt-0.5 font-medium ${isActive ? 'font-bold' : ''}`}>{tab.label}</span>
-                                </button>
-                            );
-                        })}
+                        {tabs.map(tab => (
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col items-center justify-center w-full transition-colors ${activeTab === tab.id ? 'text-pbi-primary' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>
+                                <div className={`p-1.5 rounded-full ${activeTab === tab.id ? 'bg-pbi-primary/10' : ''}`}><tab.icon /></div>
+                                <span className={`text-[10px] mt-0.5 font-medium ${activeTab === tab.id ? 'font-bold' : ''}`}>{tab.label}</span>
+                            </button>
+                        ))}
                     </nav>
                 </div>
             );
@@ -854,12 +895,7 @@
 
         try {
             const root = ReactDOM.createRoot(document.getElementById('root'));
-            root.render(
-                <ErrorBoundary>
-                    <App />
-                </ErrorBoundary>
-            );
-            // Successfully mounted: hide the boot loader
+            root.render(<ErrorBoundary><App /></ErrorBoundary>);
             document.getElementById('boot-loader').style.display = 'none';
         } catch (err) {
             document.getElementById('boot-loader').style.display = 'none';
