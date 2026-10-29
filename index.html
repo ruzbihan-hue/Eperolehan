@@ -167,10 +167,12 @@
         const IconClose = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
         const IconMenu = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>;
 
-        const INVOICE_DELIVERY_OPTIONS = ['Online (Portal E-Perolehan)', 'Hand Delivery', 'Pos/Kurier'];
+        const IconList = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>;
+
+        const INVOICE_DELIVERY_OPTIONS = ['Online (Portal E-Perolehan)', 'Hand Delivery', 'Pos/Kurier', 'By Online MBSP SPI', 'Whatsapp PDF'];
 
         // Sila masukkan URL Web App Apps Script anda di sini:
-        const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8Ql6bJgDMLwNn1OyS4msd6ycVv5nxyd5PZMINHchgFPmeKRP0O1B9REEQFJl9R0tp/exec'; 
+        const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbTYIv0I9LYDE2ZTuzOa5J_yFoAOUbF4-lMbZ0BuV9sx9eikdIKKx3H3dM05uiUg_x/exec'; 
 
         // Status Claim helper
         const calculateClaimStatus = (invoiceDate, currentStatus) => {
@@ -178,6 +180,36 @@
             if (!invoiceDate) return 'Pending Invoice';
             const diffDays = Math.ceil((new Date() - new Date(invoiceDate)) / (1000 * 60 * 60 * 24));
             return diffDays > 7 ? 'Outstanding' : 'Pending Payment';
+        };
+
+        // Tarikh dari sheet kadang-kadang sampai sebagai ISO UTC (2025-03-01T16:00:00.000Z).
+        // Tukar balik kepada yyyy-mm-dd waktu Malaysia supaya input date boleh baca.
+        const DATE_KEYS = ['dateIntake', 'startOperate', 'finishOperate', 'invoiceDate'];
+        const normalizeDate = (v) => {
+            if (!v || typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(v)) return v;
+            const d = new Date(v);
+            if (isNaN(d)) return v;
+            return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kuala_Lumpur' });
+        };
+        const normalizeJob = (job) => {
+            const out = { ...job };
+            DATE_KEYS.forEach(k => { out[k] = normalizeDate(out[k]); });
+            return out;
+        };
+
+        // Peringkat semasa sesuatu job (untuk Senarai Job)
+        const getJobStage = (job) => {
+            if (job.intakeStatus === 'Not Proceed') return 'Not Proceed';
+            if (job.intakeStatus !== 'Proceed') return 'Pending Intake';
+            if (job.operationStatus === 'Completed') return calculateClaimStatus(job.invoiceDate, job.collectionStatus);
+            return 'Operation: ' + (job.operationStatus || 'Pending');
+        };
+        const stageBadgeClass = (stage) => {
+            if (stage === 'Payment Received') return 'bg-green-100 text-green-800';
+            if (stage === 'Outstanding') return 'bg-red-100 text-red-800';
+            if (stage === 'Not Proceed') return 'bg-gray-200 text-gray-700';
+            if (stage.startsWith('Operation')) return 'bg-blue-100 text-blue-800';
+            return 'bg-yellow-100 text-yellow-800';
         };
 
         // Fungsi pembersih JSON stringified seperti ["Puan Nafishah"] dari sheet asal
@@ -444,7 +476,8 @@
             );
         };
 
-        const JobIntake = ({ jobs, clients, onSaveJob, onSaveClient }) => {
+        const JobIntake = ({ jobs, clients, branches = [], onSaveJob, onSaveClient, onDeleteJob }) => {
+            const [isEdit, setIsEdit] = useState(false);
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [isClientModalOpen, setIsClientModalOpen] = useState(false);
             const [formData, setFormData] = useState({});
@@ -463,7 +496,15 @@
                 return filtered.sort((a, b) => (order[a.intakeStatus] || 99) - (order[b.intakeStatus] || 99));
             }, [jobs, filterCompany, filterStatus]);
 
+            const handleDelete = (job) => {
+                if (window.confirm(`Padam job ${job.quotationNumber} (${job.vehicle || '-'})?\n\nRekod dalam Job Intake, Operation dan Report & Claim akan dipadam terus. Tindakan ini tak boleh diundur.`)) {
+                    onDeleteJob(job.quotationNumber);
+                    setIsModalOpen(false);
+                }
+            };
+
             const handleOpenModal = (job = null) => {
+                setIsEdit(!!job);
                 if (job) {
                     setFormData(job);
                 } else {
@@ -530,6 +571,7 @@
                                         </td>
                                         <td className="p-3">
                                             <button onClick={() => handleOpenModal(job)} className="text-pbi-primary hover:underline text-sm font-medium">Kemaskini</button>
+                                            <button onClick={() => handleDelete(job)} className="ml-4 text-red-600 hover:underline text-sm font-medium">Padam</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -564,7 +606,7 @@
                                 </div>
 
                                 <InputGroup label="Vehicle (No Plat)" name="vehicle" value={formData.vehicle} onChange={handleChange} required />
-                                <InputGroup label="Branch" name="branch" value={formData.branch} onChange={handleChange} required />
+                                <InputGroup label="Branch / Cawangan" type="select" name="branch" value={formData.branch} onChange={handleChange} options={[...new Set([...branches, formData.branch].filter(Boolean))]} required />
                                 <InputGroup label="Tarikh Intake" type="date" name="dateIntake" value={formData.dateIntake} onChange={handleChange} required />
                                 <InputGroup label="Job Order / Verbal" type="select" name="jobOrderType" value={formData.jobOrderType} onChange={handleChange} options={['Job Order', 'Verbal']} required />
                                 <InputGroup label="Proceed atau Inspection" type="select" name="actionType" value={formData.actionType} onChange={handleChange} options={['Proceed', 'Inspection']} required />
@@ -574,6 +616,7 @@
                             <div className="mt-6 flex justify-end">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="mr-3 px-4 py-2 border border-gray-300 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800">Batal</button>
                                 <button type="submit" className="px-4 py-2 bg-pbi-primary text-white rounded-sm hover:bg-blue-600">Simpan Intake</button>
+                                {isEdit && <button type="button" onClick={() => handleDelete(formData)} className="ml-3 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700">Padam Job</button>}
                             </div>
                         </form>
                     </Modal>
@@ -584,24 +627,31 @@
             );
         };
 
-        const Operation = ({ jobs, onSaveJob }) => {
+        const Operation = ({ jobs, branches = [], onSaveJob }) => {
+            const [activeBranch, setActiveBranch] = useState('Semua');
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [formData, setFormData] = useState({});
             const [filterCompany, setFilterCompany] = useState('');
             const [filterStatus, setFilterStatus] = useState('');
 
             const baseOperationJobs = jobs.filter(j => j.intakeStatus === 'Proceed');
-            const uniqueCompanies = [...new Set(baseOperationJobs.map(j => j.company))].filter(Boolean);
+            const NO_BRANCH = '(Tiada Cawangan)';
+            const branchOf = (j) => (j.branch || '').toString().trim() || NO_BRANCH;
+            const branchTabs = [...new Set([...branches, ...baseOperationJobs.map(j => (j.branch || '').toString().trim())].filter(Boolean))];
+            const tabList = ['Semua', ...branchTabs, ...(baseOperationJobs.some(j => branchOf(j) === NO_BRANCH) ? [NO_BRANCH] : [])];
+            const currentBranch = tabList.includes(activeBranch) ? activeBranch : 'Semua';
+            const branchJobs = currentBranch === 'Semua' ? baseOperationJobs : baseOperationJobs.filter(j => branchOf(j) === currentBranch);
+            const uniqueCompanies = [...new Set(branchJobs.map(j => j.company))].filter(Boolean);
             const uniqueStatuses = ['Pending', 'In Progress', 'Completed'];
 
             const displayJobs = useMemo(() => {
-                let filtered = baseOperationJobs.filter(j => {
+                let filtered = branchJobs.filter(j => {
                     const currentStatus = j.operationStatus || 'Pending';
                     return (filterCompany ? j.company === filterCompany : true) && (filterStatus ? currentStatus === filterStatus : true);
                 });
                 const order = { 'Pending': 1, 'In Progress': 2, 'Completed': 3 };
                 return filtered.sort((a, b) => (order[a.operationStatus || 'Pending'] || 99) - (order[b.operationStatus || 'Pending'] || 99));
-            }, [baseOperationJobs, filterCompany, filterStatus]);
+            }, [baseOperationJobs, currentBranch, filterCompany, filterStatus]);
 
             const handleSubmit = (e) => {
                 e.preventDefault();
@@ -611,7 +661,18 @@
 
             return (
                 <div className="animate-fade-in">
-                    <h2 className="text-2xl font-semibold mb-6">Operation Department</h2>
+                    <h2 className="text-2xl font-semibold mb-4">Operation Department</h2>
+                    <div className="flex overflow-x-auto gap-1 mb-4 border-b border-gray-200 dark:border-gray-700">
+                        {tabList.map(t => {
+                            const count = t === 'Semua' ? baseOperationJobs.length : baseOperationJobs.filter(j => branchOf(j) === t).length;
+                            const active = t === currentBranch;
+                            return (
+                                <button key={t} onClick={() => setActiveBranch(t)} className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${active ? 'border-pbi-primary text-pbi-primary' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>
+                                    {t} <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-full ${active ? 'bg-pbi-primary/10' : 'bg-gray-100 dark:bg-gray-700'}`}>{count}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
                     <FilterBar companies={uniqueCompanies} statuses={uniqueStatuses} filterCompany={filterCompany} setFilterCompany={setFilterCompany} filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
                     <div className="bg-pbi-cardLight dark:bg-pbi-cardDark rounded-sm pbi-shadow overflow-x-auto">
                         <table className="w-full text-left text-sm whitespace-nowrap">
@@ -757,12 +818,148 @@
             );
         };
 
+        const DetailRow = ({ label, value }) => (
+            <div className="flex justify-between gap-4 py-1.5 border-b border-gray-100 dark:border-gray-800 text-sm">
+                <span className="text-gray-500 flex-shrink-0">{label}</span>
+                <span className="font-medium text-right break-words">{value !== undefined && value !== null && value !== '' ? value : '-'}</span>
+            </div>
+        );
+
+        const JobHistory = ({ jobs, onDeleteJob }) => {
+            const [search, setSearch] = useState('');
+            const [filterCompany, setFilterCompany] = useState('');
+            const [filterStatus, setFilterStatus] = useState('');
+            const [selectedQtn, setSelectedQtn] = useState(null);
+
+            const rows = jobs.map(j => ({ ...j, stage: getJobStage(j) }));
+            const uniqueCompanies = [...new Set(rows.map(j => j.company))].filter(Boolean);
+            const stages = ['Pending Intake', 'Not Proceed', 'Operation: Pending', 'Operation: In Progress', 'Pending Invoice', 'Pending Payment', 'Outstanding', 'Payment Received'];
+
+            const displayJobs = rows
+                .filter(j => (filterCompany ? j.company === filterCompany : true) && (filterStatus ? j.stage === filterStatus : true))
+                .filter(j => {
+                    if (!search.trim()) return true;
+                    const q = search.trim().toLowerCase();
+                    return [j.quotationNumber, j.company, j.vehicle, j.branch].some(v => String(v || '').toLowerCase().includes(q));
+                })
+                .sort((a, b) => String(b.dateIntake || '').localeCompare(String(a.dateIntake || '')));
+
+            const selected = selectedQtn ? rows.find(j => j.quotationNumber === selectedQtn) : null;
+
+            const handleDelete = (job) => {
+                if (window.confirm(`Padam job ${job.quotationNumber} (${job.vehicle || '-'})?\n\nRekod dalam Job Intake, Operation dan Report & Claim akan dipadam terus. Tindakan ini tak boleh diundur.`)) {
+                    onDeleteJob(job.quotationNumber);
+                    setSelectedQtn(null);
+                }
+            };
+
+            return (
+                <div className="animate-fade-in">
+                    <h2 className="text-2xl font-semibold mb-6">Senarai Keseluruhan Job <span className="text-base font-normal text-gray-500">({displayJobs.length} / {rows.length})</span></h2>
+
+                    <div className="flex flex-col md:flex-row gap-4 mb-4 bg-white dark:bg-gray-800 p-4 rounded-sm pbi-shadow border border-gray-200 dark:border-gray-700">
+                        <div className="flex-1">
+                            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Cari</label>
+                            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="No. sebutharga, plat, syarikat, cawangan..." className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-sm" />
+                        </div>
+                        <div className="flex-1">
+                            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Tapis Syarikat / Agensi</label>
+                            <select value={filterCompany} onChange={(e) => setFilterCompany(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-sm">
+                                <option value="">Semua Syarikat</option>
+                                {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                        </div>
+                        <div className="flex-1">
+                            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Tapis Peringkat</label>
+                            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-800 text-sm">
+                                <option value="">Semua Peringkat</option>
+                                {stages.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="bg-pbi-cardLight dark:bg-pbi-cardDark rounded-sm pbi-shadow overflow-x-auto">
+                        <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                                <tr>
+                                    <th className="p-3 font-semibold">No. Sebutharga</th>
+                                    <th className="p-3 font-semibold">Syarikat / Agensi</th>
+                                    <th className="p-3 font-semibold">Cawangan</th>
+                                    <th className="p-3 font-semibold">No. Plat</th>
+                                    <th className="p-3 font-semibold">Tarikh Intake</th>
+                                    <th className="p-3 font-semibold">Peringkat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {displayJobs.map((job, idx) => (
+                                    <tr key={job.quotationNumber} onClick={() => setSelectedQtn(job.quotationNumber)} className={`cursor-pointer border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${idx % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/30'}`}>
+                                        <td className="p-3 font-medium text-pbi-primary">{job.quotationNumber}</td>
+                                        <td className="p-3">{job.company}</td>
+                                        <td className="p-3">{job.branch || '-'}</td>
+                                        <td className="p-3 font-mono">{job.vehicle}</td>
+                                        <td className="p-3">{job.dateIntake}</td>
+                                        <td className="p-3"><span className={`px-2 py-1 text-xs rounded-full ${stageBadgeClass(job.stage)}`}>{job.stage}</span></td>
+                                    </tr>
+                                ))}
+                                {displayJobs.length === 0 && <tr><td colSpan="6" className="p-4 text-center text-gray-500">Tiada rekod dijumpai.</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <Modal isOpen={!!selected} onClose={() => setSelectedQtn(null)} title={selected ? `Maklumat Penuh: ${selected.quotationNumber}` : ''}>
+                        {selected && (
+                            <div>
+                                <div className="mb-4"><span className={`px-2 py-1 text-xs rounded-full font-bold ${stageBadgeClass(selected.stage)}`}>{selected.stage}</span></div>
+
+                                <h4 className="text-sm font-bold uppercase text-pbi-primary mb-1">1. Job Intake</h4>
+                                <div className="mb-5">
+                                    <DetailRow label="No. Sebutharga" value={selected.quotationNumber} />
+                                    <DetailRow label="Syarikat / Agensi" value={selected.company} />
+                                    <DetailRow label="Cawangan" value={selected.branch} />
+                                    <DetailRow label="No. Plat" value={selected.vehicle} />
+                                    <DetailRow label="Tarikh Intake" value={selected.dateIntake} />
+                                    <DetailRow label="Job Order / Verbal" value={selected.jobOrderType} />
+                                    <DetailRow label="Proceed / Inspection" value={selected.actionType} />
+                                    <DetailRow label="Quotation Amount" value={selected.quotationAmount !== '' && selected.quotationAmount != null ? `RM ${selected.quotationAmount}` : ''} />
+                                    <DetailRow label="Status Intake" value={selected.intakeStatus} />
+                                </div>
+
+                                <h4 className="text-sm font-bold uppercase text-pbi-primary mb-1">2. Operation</h4>
+                                <div className="mb-5">
+                                    <DetailRow label="PIC Foreman" value={selected.picForeman} />
+                                    <DetailRow label="Start Operate" value={selected.startOperate} />
+                                    <DetailRow label="Finish Operate" value={selected.finishOperate} />
+                                    <DetailRow label="Status Operasi" value={selected.operationStatus} />
+                                    <DetailRow label="Remark" value={selected.operationRemark} />
+                                </div>
+
+                                <h4 className="text-sm font-bold uppercase text-pbi-primary mb-1">3. Report &amp; Claim</h4>
+                                <div className="mb-2">
+                                    <DetailRow label="Tarikh Invois" value={selected.invoiceDate} />
+                                    <DetailRow label="Cara Penghantaran Invois" value={selected.invoiceDelivery} />
+                                    <DetailRow label="Status Kutipan" value={selected.operationStatus === 'Completed' ? calculateClaimStatus(selected.invoiceDate, selected.collectionStatus) : selected.collectionStatus} />
+                                    <DetailRow label="Amount Collection Diterima" value={selected.amountCollection !== '' && selected.amountCollection != null ? `RM ${selected.amountCollection}` : ''} />
+                                    <DetailRow label="Remark Claim" value={selected.claimRemark} />
+                                </div>
+
+                                <div className="mt-6 flex justify-between">
+                                    <button type="button" onClick={() => handleDelete(selected)} className="px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 text-sm">Padam Job</button>
+                                    <button type="button" onClick={() => setSelectedQtn(null)} className="px-4 py-2 border border-gray-300 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 text-sm">Tutup</button>
+                                </div>
+                            </div>
+                        )}
+                    </Modal>
+                </div>
+            );
+        };
+
         const App = () => {
             const [activeTab, setActiveTab] = useState('dashboard');
             const [isDarkMode, setIsDarkMode] = useState(false);
             const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
             const [jobs, setJobs] = useState([]);
             const [clients, setClients] = useState([]);
+            const [branches, setBranches] = useState([]);
             const [isLoading, setIsLoading] = useState(false);
 
             useEffect(() => { document.documentElement.classList.toggle('dark', isDarkMode); }, [isDarkMode]);
@@ -776,11 +973,12 @@
                         const data = await response.json();
                         // Handle format JSON baru: { jobs: [...], clients: [...] }
                         if (data && !Array.isArray(data)) {
-                            setJobs(data.jobs || []);
+                            setJobs((data.jobs || []).map(normalizeJob));
                             setClients(data.clients || []);
+                            setBranches((data.branches || []).map(b => String(b).trim()).filter(Boolean));
                         } else if (Array.isArray(data)) {
                             // Fallback jika backend lambat update (hanya return jobs)
-                            setJobs(data);
+                            setJobs(data.map(normalizeJob));
                         }
                     } catch (error) {
                         console.error("Gagal menarik data dari Google Sheets:", error);
@@ -796,6 +994,9 @@
                 const dataToSave = { ...payload, type };
                 
                 // Optimistic UI Update
+                if (type === 'delete') {
+                    setJobs(prev => prev.filter(j => j.quotationNumber !== payload.quotationNumber));
+                }
                 if (type === 'job') {
                     const exists = jobs.find(j => j.quotationNumber === payload.quotationNumber);
                     setJobs(exists ? jobs.map(j => j.quotationNumber === payload.quotationNumber ? payload : j) : [payload, ...jobs]);
@@ -806,11 +1007,15 @@
 
                 if (APPSCRIPT_URL) {
                     try {
-                        await fetch(APPSCRIPT_URL, {
+                        const res = await fetch(APPSCRIPT_URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify(dataToSave)
                         });
+                        try {
+                            const result = await res.json();
+                            if (result && result.status === 'error') alert('Server melaporkan ralat: ' + result.message);
+                        } catch (parseErr) { /* respons bukan JSON, abaikan */ }
                     } catch (error) {
                         console.error("Gagal hantar data ke Google Sheets:", error);
                         alert("Gagal menyelaraskan data. Sila semak internet anda.");
@@ -818,12 +1023,15 @@
                 }
             };
 
+            const handleDeleteJob = (quotationNumber) => saveDataToDB({ quotationNumber }, 'delete');
+
             const tabs = [
                 { id: 'dashboard', label: 'Dashboard', icon: IconDashboard },
                 { id: 'references', label: 'Client References', icon: IconUsers },
                 { id: 'intake', label: 'Job Intake', icon: IconIntake },
                 { id: 'operation', label: 'Operation', icon: IconOperation },
                 { id: 'claim', label: 'Report & Claim', icon: IconClaim },
+                { id: 'history', label: 'Senarai Job', icon: IconList },
             ];
 
             return (
@@ -887,8 +1095,9 @@
                             <div className="max-w-7xl mx-auto w-full flex-1">
                                 {activeTab === 'dashboard' && <Dashboard jobs={jobs} />}
                                 {activeTab === 'references' && <ClientReferences clients={clients} onSaveClient={(data) => saveDataToDB(data, 'client')} />}
-                                {activeTab === 'intake' && <JobIntake jobs={jobs} clients={clients} onSaveJob={(data) => saveDataToDB(data, 'job')} onSaveClient={(data) => saveDataToDB(data, 'client')} />}
-                                {activeTab === 'operation' && <Operation jobs={jobs} onSaveJob={(data) => saveDataToDB(data, 'job')} />}
+                                {activeTab === 'intake' && <JobIntake jobs={jobs} clients={clients} branches={branches} onDeleteJob={handleDeleteJob} onSaveJob={(data) => saveDataToDB(data, 'job')} onSaveClient={(data) => saveDataToDB(data, 'client')} />}
+                                {activeTab === 'operation' && <Operation jobs={jobs} branches={branches} onSaveJob={(data) => saveDataToDB(data, 'job')} />}
+                                {activeTab === 'history' && <JobHistory jobs={jobs} onDeleteJob={handleDeleteJob} />}
                                 {activeTab === 'claim' && <ReportClaim jobs={jobs} onSaveJob={(data) => saveDataToDB(data, 'job')} />}
                             </div>
                         </div>
